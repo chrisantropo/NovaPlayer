@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -94,6 +95,9 @@ public partial class MainWindow : Window
     private readonly PlaylistService _playlistService = new();
     private readonly SubtitleService _subtitleService = new();
     private readonly RecentFilesService _recentFilesService = new();
+    private readonly UpdateService _updateService = new();
+    private UpdateInfo? _latestUpdateInfo;
+    private System.Threading.CancellationTokenSource? _updateCts;
 
     private bool _isFullscreen = false;
     private Rect _preFullscreenBounds;
@@ -1196,6 +1200,11 @@ public partial class MainWindow : Window
                 AudioFlyout.Visibility = Visibility.Collapsed;
                 OnlineSubtitlesDrawer.Visibility = Visibility.Collapsed;
                 PlaylistDrawer.Visibility = Visibility.Collapsed;
+                HelpDrawer.Visibility = Visibility.Collapsed;
+                e.Handled = true;
+                break;
+            case Key.F1:
+                OpenHelpDrawer("about");
                 e.Handled = true;
                 break;
             case Key.G:
@@ -2107,6 +2116,173 @@ public partial class MainWindow : Window
             };
             target.Items.Add(clearItem);
         }
+    }
+
+    #endregion
+
+    #region Help, About & Updates Handlers
+
+    public void OpenHelpDrawer(string tab = "about")
+    {
+        HelpDrawer.Visibility = Visibility.Visible;
+        OnlineSubtitlesDrawer.Visibility = Visibility.Collapsed;
+        PlaylistDrawer.Visibility = Visibility.Collapsed;
+        SubtitlesFlyout.Visibility = Visibility.Collapsed;
+        AudioFlyout.Visibility = Visibility.Collapsed;
+
+        SwitchHelpTab(tab);
+    }
+
+    private void SwitchHelpTab(string tab)
+    {
+        PanelTabAbout.Visibility = tab == "about" ? Visibility.Visible : Visibility.Collapsed;
+        PanelTabUpdates.Visibility = tab == "updates" ? Visibility.Visible : Visibility.Collapsed;
+        PanelTabShortcuts.Visibility = tab == "shortcuts" ? Visibility.Visible : Visibility.Collapsed;
+
+        TabBtnAbout.BorderBrush = tab == "about" ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("GlassBorderBrush");
+        TabBtnUpdates.BorderBrush = tab == "updates" ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("GlassBorderBrush");
+        TabBtnShortcuts.BorderBrush = tab == "shortcuts" ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("GlassBorderBrush");
+
+        if (tab == "updates" && _latestUpdateInfo == null && UpdateLoadingIndicator.Visibility != Visibility.Visible)
+        {
+            CheckForUpdatesInternal();
+        }
+    }
+
+    private void BtnCloseHelpDrawer_Click(object sender, RoutedEventArgs e) => HelpDrawer.Visibility = Visibility.Collapsed;
+
+    private void TabBtnAbout_Click(object sender, RoutedEventArgs e) => SwitchHelpTab("about");
+    private void TabBtnUpdates_Click(object sender, RoutedEventArgs e) => SwitchHelpTab("updates");
+    private void TabBtnShortcuts_Click(object sender, RoutedEventArgs e) => SwitchHelpTab("shortcuts");
+
+    private void BtnAbout_Click(object sender, RoutedEventArgs e) => OpenHelpDrawer("about");
+    private void BtnShortcutsHelp_Click(object sender, RoutedEventArgs e) => OpenHelpDrawer("shortcuts");
+    private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e) => OpenHelpDrawer("updates");
+
+    private void BtnTriggerCheckUpdates_Click(object sender, RoutedEventArgs e) => CheckForUpdatesInternal();
+
+    private async void CheckForUpdatesInternal()
+    {
+        UpdateLoadingIndicator.Visibility = Visibility.Visible;
+        UpdateUpToDateCard.Visibility = Visibility.Collapsed;
+        UpdateAvailableCard.Visibility = Visibility.Collapsed;
+        UpdateErrorCard.Visibility = Visibility.Collapsed;
+        UpdateDownloadProgressPanel.Visibility = Visibility.Collapsed;
+        BtnTriggerCheckUpdates.IsEnabled = false;
+
+        try
+        {
+            _latestUpdateInfo = await _updateService.CheckForUpdatesAsync();
+
+            if (_latestUpdateInfo == null)
+            {
+                // No releases found on GitHub or server error
+                UpdateUpToDateCard.Visibility = Visibility.Visible;
+            }
+            else if (_latestUpdateInfo.IsNewer && !string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
+            {
+                UpdateAvailableCard.Visibility = Visibility.Visible;
+                TxtAvailableVersion.Text = $"v{_latestUpdateInfo.Version} disponible";
+                TxtAvailableDate.Text = _latestUpdateInfo.PublishedAt.HasValue 
+                    ? $"Publicado el {_latestUpdateInfo.PublishedAt.Value:dd/MM/yyyy HH:mm}" 
+                    : "Publicado en GitHub Releases";
+                TxtReleaseNotes.Text = string.IsNullOrWhiteSpace(_latestUpdateInfo.ReleaseNotes) 
+                    ? "Esta versión incluye mejoras de rendimiento, optimizaciones y correcciones de errores." 
+                    : _latestUpdateInfo.ReleaseNotes;
+                TxtUpdateSize.Text = _latestUpdateInfo.FileSizeBytes > 0 
+                    ? $"{_latestUpdateInfo.FileSizeBytes / (1024.0 * 1024.0):0.1} MB" 
+                    : "";
+            }
+            else
+            {
+                UpdateUpToDateCard.Visibility = Visibility.Visible;
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateErrorCard.Visibility = Visibility.Visible;
+            TxtUpdateErrorMessage.Text = $"No se pudo comprobar la actualización: {ex.Message}";
+        }
+        finally
+        {
+            UpdateLoadingIndicator.Visibility = Visibility.Collapsed;
+            BtnTriggerCheckUpdates.IsEnabled = true;
+        }
+    }
+
+    private async void BtnDownloadAndInstallUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_latestUpdateInfo == null || string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
+        {
+            ShowNotification("No hay ningún instalador disponible para descargar.");
+            return;
+        }
+
+        BtnDownloadAndInstallUpdate.IsEnabled = false;
+        UpdateDownloadProgressPanel.Visibility = Visibility.Visible;
+        UpdateProgressBar.Value = 0;
+        TxtUpdateProgress.Text = "Descargando instalador... 0%";
+
+        _updateCts?.Cancel();
+        _updateCts = new System.Threading.CancellationTokenSource();
+
+        var progress = new Progress<double>(percent =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                UpdateProgressBar.Value = percent;
+                TxtUpdateProgress.Text = $"Descargando instalador... {percent:0}%";
+            });
+        });
+
+        try
+        {
+            string installerPath = await _updateService.DownloadUpdateAsync(_latestUpdateInfo.DownloadUrl, progress, _updateCts.Token);
+            TxtUpdateProgress.Text = "Descarga completa. Iniciando instalador...";
+            ShowNotification("Iniciando actualización...");
+            await Task.Delay(800);
+
+            UpdateService.InstallAndRestart(installerPath);
+        }
+        catch (OperationCanceledException)
+        {
+            TxtUpdateProgress.Text = "Descarga cancelada.";
+            BtnDownloadAndInstallUpdate.IsEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            UpdateDownloadProgressPanel.Visibility = Visibility.Collapsed;
+            UpdateErrorCard.Visibility = Visibility.Visible;
+            TxtUpdateErrorMessage.Text = $"Error al descargar la actualización: {ex.Message}";
+            BtnDownloadAndInstallUpdate.IsEnabled = true;
+            ShowNotification($"Error al actualizar: {ex.Message}");
+        }
+    }
+
+    private void BtnOpenGitHub_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/chrisantropo/NovaPlayer",
+                UseShellExecute = true
+            });
+        }
+        catch { }
+    }
+
+    private void BtnReportIssue_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/chrisantropo/NovaPlayer/issues",
+                UseShellExecute = true
+            });
+        }
+        catch { }
     }
 
     #endregion

@@ -144,6 +144,15 @@
                             <MenuItem x:Name="ContextAutoHud" Header="⏱ Ocultar automáticamente tras 5s de inactividad" IsCheckable="True" Click="ToggleAutoHud_Click" />
                         </MenuItem>
 
+                        <MenuItem Header="Ayuda">
+                            <MenuItem Header="Buscar actualizaciones..." Click="BtnCheckUpdates_Click" />
+                            <MenuItem Header="Atajos de teclado y ratón" InputGestureText="F1" Click="BtnShortcutsHelp_Click" />
+                            <Separator />
+                            <MenuItem Header="Acerca de Nova Player..." Click="BtnAbout_Click" />
+                            <MenuItem Header="Repositorio en GitHub..." Click="BtnOpenGitHub_Click" />
+                            <MenuItem Header="Reportar un problema..." Click="BtnReportIssue_Click" />
+                        </MenuItem>
+
                         <Separator />
                         <!-- Quick Window / Display Shortcuts -->
                         <MenuItem Header="Pantalla completa" InputGestureText="F" Click="BtnFullscreen_Click" />
@@ -394,6 +403,14 @@
                                 <MenuItem Header="_Barras">
                                     <MenuItem x:Name="MenuPinHud" Header="📌 Fijar barras siempre visibles" IsCheckable="True" Click="TogglePinHud_Click" />
                                     <MenuItem x:Name="MenuAutoHud" Header="⏱ Ocultar automáticamente tras 5s de inactividad" IsCheckable="True" Click="ToggleAutoHud_Click" />
+                                </MenuItem>
+                                <MenuItem Header="_Ayuda">
+                                    <MenuItem Header="Buscar actualizaciones..." Click="BtnCheckUpdates_Click" />
+                                    <MenuItem Header="Atajos de teclado y ratón" InputGestureText="F1" Click="BtnShortcutsHelp_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Acerca de Nova Player..." Click="BtnAbout_Click" />
+                                    <MenuItem Header="Repositorio en GitHub..." Click="BtnOpenGitHub_Click" />
+                                    <MenuItem Header="Reportar un problema..." Click="BtnReportIssue_Click" />
                                 </MenuItem>
                             </Menu>
                         </StackPanel>
@@ -897,6 +914,308 @@
                         <Border Grid.Row="3" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
                             <TextBlock Text="Puedes arrastrar archivos de vídeo directamente a esta lista." FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
                         </Border>
+                    </Grid>
+                </Border>
+
+                <!-- 9. HELP, ABOUT & UPDATES DRAWER (Right Slide Panel) -->
+                <Border x:Name="HelpDrawer" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1,0,0,0" Width="460" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.75" Color="Black" />
+                    </Border.Effect>
+                    <Grid Margin="18,45,18,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource PathHelp}" Fill="{StaticResource AccentBrush}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,8,0" />
+                                <TextBlock Text="Ayuda y Acerca de" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="BtnCloseHelpDrawer_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{StaticResource TextSecondaryBrush}" Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <!-- Navigation Tabs -->
+                        <Grid Grid.Row="1" Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button x:Name="TabBtnAbout" Grid.Column="0" Content="Acerca de" Style="{StaticResource GlassButton}" Margin="0,0,3,0" Padding="8,6" FontSize="12" Click="TabBtnAbout_Click" />
+                            <Button x:Name="TabBtnUpdates" Grid.Column="1" Content="Actualizaciones" Style="{StaticResource GlassButton}" Margin="3,0,3,0" Padding="8,6" FontSize="12" Click="TabBtnUpdates_Click" />
+                            <Button x:Name="TabBtnShortcuts" Grid.Column="2" Content="Atajos" Style="{StaticResource GlassButton}" Margin="3,0,0,0" Padding="8,6" FontSize="12" Click="TabBtnShortcuts_Click" />
+                        </Grid>
+
+                        <!-- TAB 1: ABOUT -->
+                        <ScrollViewer x:Name="PanelTabAbout" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="0,0,4,0">
+                                <!-- Glowing Logo & Title -->
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="20,18" Margin="0,0,0,12">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <Grid Width="70" Height="70" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                            <Ellipse Fill="{StaticResource AccentGlowBrush}">
+                                                <Ellipse.Effect>
+                                                    <BlurEffect Radius="18" />
+                                                </Ellipse.Effect>
+                                            </Ellipse>
+                                            <Image Source="{StaticResource NovaPlayerLogoImage}" Width="60" Height="60" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock Text="Nova Player" FontFamily="{StaticResource FontAudiowide}" FontSize="20" FontWeight="Normal" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="Versión 1.0.0 (x64) • Windows 11 Fluent" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                        
+                                        <!-- Engine Badges -->
+                                        <WrapPanel HorizontalAlignment="Center" Margin="0,10,0,0">
+                                            <Border Background="#161F2E" CornerRadius="4" Padding="6,2" Margin="3">
+                                                <TextBlock Text="LibVLC Core 3.0.24" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            </Border>
+                                            <Border Background="#161F2E" CornerRadius="4" Padding="6,2" Margin="3">
+                                                <TextBlock Text=".NET 9.0 (x64)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            </Border>
+                                            <Border Background="#161F2E" CornerRadius="4" Padding="6,2" Margin="3">
+                                                <TextBlock Text="D3D11 / DXVA2" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            </Border>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Description -->
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Descripción" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                                        <TextBlock Text="Nova Player es una evolución moderna de los reproductores clásicos para Windows, diseñado para ofrecer reproducción fluida de vídeo en 4K y 8K, soporte universal de formatos y códecs, integración y sincronización milimétrica de subtítulos online, y una experiencia visual oscura y refinada." 
+                                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16" />
+                                        <Separator Margin="0,10,0,8" Background="{StaticResource GlassBorderBrush}" />
+                                        <TextBlock Text="Desarrollado con dedicación por Chris Escalantech" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Action Links -->
+                                <Button Style="{StaticResource GlassButton}" Margin="0,0,0,6" HorizontalContentAlignment="Left" Padding="12,10" Click="BtnOpenGitHub_Click">
+                                    <Grid Width="380">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource PathExternalLink}" Fill="{StaticResource AccentBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                            <TextBlock Text="Repositorio del proyecto en GitHub" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Text="github.com/chrisantropo/NovaPlayer" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
+
+                                <Button Style="{StaticResource GlassButton}" Margin="0,0,0,6" HorizontalContentAlignment="Left" Padding="12,10" Click="BtnReportIssue_Click">
+                                    <Grid Width="380">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource PathHelp}" Fill="{StaticResource AccentBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                            <TextBlock Text="Reportar un problema o sugerencia" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Text="Issues" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
+
+                                <Button Style="{StaticResource AccentButton}" Margin="0,4,0,0" Padding="12,10" HorizontalAlignment="Stretch" Click="TabBtnUpdates_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource PathUpdate}" Fill="{StaticResource VoidBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                        <TextBlock Text="Comprobar si hay actualizaciones" FontSize="12" FontWeight="Bold" Foreground="{StaticResource VoidBrush}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- TAB 2: UPDATES -->
+                        <ScrollViewer x:Name="PanelTabUpdates" Grid.Row="2" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                            <StackPanel Margin="0,0,4,0">
+                                <!-- Current version status card -->
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Background="#162235" CornerRadius="8" Width="40" Height="40" Margin="0,0,12,0">
+                                            <Path Data="{StaticResource PathUpdate}" Fill="{StaticResource AccentBrush}" Width="20" Height="20" Stretch="Uniform" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Actualizaciones de Software" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock x:Name="TxtCurrentInstalledVersion" Text="Versión instalada: v1.0.0" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Trigger check button -->
+                                <Button x:Name="BtnTriggerCheckUpdates" Style="{StaticResource GlassButton}" Padding="14,10" Margin="0,0,0,14" HorizontalAlignment="Stretch" Click="BtnTriggerCheckUpdates_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource PathUpdate}" Fill="{StaticResource AccentBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                        <TextBlock Text="Buscar actualizaciones en GitHub ahora" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Loading Indicator -->
+                                <Border x:Name="UpdateLoadingIndicator" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12" Visibility="Collapsed">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True" Height="4" Width="200" Foreground="{StaticResource AccentBrush}" Background="#1F2633" BorderThickness="0" Margin="0,0,0,10" />
+                                        <TextBlock Text="Consultando versiones en GitHub Releases..." FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Up to date card -->
+                                <Border x:Name="UpdateUpToDateCard" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12" Visibility="Collapsed">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <Path Data="{StaticResource PathCheck}" Fill="{StaticResource AccentBrush}" Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                        <TextBlock Text="¡Nova Player está actualizado!" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="Ya cuentas con la última versión disponible del reproductor." FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Update Available Card -->
+                                <Border x:Name="UpdateAvailableCard" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                            <Border Background="{StaticResource AccentBrush}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                <TextBlock Text="NUEVA VERSIÓN" FontSize="9" FontWeight="Bold" Foreground="{StaticResource VoidBrush}" />
+                                            </Border>
+                                            <TextBlock x:Name="TxtAvailableVersion" Text="v1.0.1 disponible" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="TxtAvailableDate" Text="Publicado recientemente" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,10" />
+
+                                        <TextBlock Text="Notas de la versión:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4" />
+                                        <Border Background="#10151E" CornerRadius="6" Padding="10" Margin="0,0,0,14" MaxHeight="140">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                <TextBlock x:Name="TxtReleaseNotes" Text="Novedades y correcciones de errores." FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                            </ScrollViewer>
+                                        </Border>
+
+                                        <!-- Download & Install Button -->
+                                        <Button x:Name="BtnDownloadAndInstallUpdate" Style="{StaticResource AccentButton}" Padding="14,10" HorizontalAlignment="Stretch" Click="BtnDownloadAndInstallUpdate_Click">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Path Data="{StaticResource PathDownload}" Fill="{StaticResource VoidBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                                <TextBlock Text="Descargar e Instalar automáticamente" FontSize="12" FontWeight="Bold" Foreground="{StaticResource VoidBrush}" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Download Progress -->
+                                        <StackPanel x:Name="UpdateDownloadProgressPanel" Margin="0,12,0,0" Visibility="Collapsed">
+                                            <Grid Margin="0,0,0,6">
+                                                <TextBlock x:Name="TxtUpdateProgress" Text="Descargando instalador... 0%" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                <TextBlock x:Name="TxtUpdateSize" Text="" FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <ProgressBar x:Name="UpdateProgressBar" Height="6" Minimum="0" Maximum="100" Value="0" Foreground="{StaticResource AccentBrush}" Background="#1F2633" BorderThickness="0" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Error Card -->
+                                <Border x:Name="UpdateErrorCard" Background="{StaticResource SurfaceBrush}" BorderBrush="#503030" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock Text="No se pudieron comprobar las actualizaciones" FontSize="12" FontWeight="SemiBold" Foreground="#FF8888" Margin="0,0,0,4" />
+                                        <TextBlock x:Name="TxtUpdateErrorMessage" Text="Comprueba tu conexión a Internet o visita directamente el repositorio de GitHub." FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- TAB 3: SHORTCUTS -->
+                        <ScrollViewer x:Name="PanelTabShortcuts" Grid.Row="2" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                            <StackPanel Margin="0,0,4,0">
+                                <!-- Playback Shortcuts -->
+                                <TextBlock Text="REPRODUCCIÓN Y AUDIO" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="2,0,0,6" />
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Espacio / K / Clic en vídeo" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Reproducir / Pausar" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="← / → (Flechas)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Retroceder / Avanzar 10s" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="↑ / ↓ (Flechas)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Subir / Bajar volumen (±1%)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Rueda del ratón (Scroll)" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Subir / Bajar volumen (±5%)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="M" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Silenciar / Activar sonido" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="[ / ]" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Velocidad (0.25x - 3.0x)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Window Shortcuts -->
+                                <TextBlock Text="VENTANA Y PANTALLA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="2,0,0,6" />
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="F / F11 / Doble clic" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Pantalla completa total" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="S" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Captura de pantalla rápida" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="P" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Lista de reproducción" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="F1" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Abrir Ayuda y Acerca de" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Esc" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Salir de pantalla completa / Cerrar cajón" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Subtitles & Files -->
+                                <TextBlock Text="SUBTÍTULOS Y ARCHIVOS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="2,0,0,6" />
+                                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Ctrl + O" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Abrir archivo de vídeo" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Ctrl + Shift + S" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Buscar subtítulos online" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="G / H" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Sincronizar subtítulo (±50 ms)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <Separator Background="{StaticResource GlassBorderBrush}" Margin="0,3" />
+                                        <Grid Margin="0,2,0,4">
+                                            <TextBlock Text="Arrastrar archivos" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Reproducción o carga inmediata" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Grid>
                 </Border>
 

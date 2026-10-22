@@ -1,4 +1,4 @@
-; Script de instalador para Nova Player
+﻿; Script de instalador para Nova Player
 ; Generado con Inno Setup 6
 
 #define MyAppName "Nova Player"

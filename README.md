@@ -58,6 +58,10 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 - **Historial de archivos recientes**: Lista de reproducción rápida con los últimos archivos abiertos y opción de borrado.
 - **Lista de reproducción (Playlist)** con soporte de ordenación, modos de repetición (Todo, Uno, Desactivado) y reproducción aleatoria (Shuffle).
 - **Notificaciones Toast flotantes**: Indicadores visuales instantáneos al cambiar volumen, velocidad, retraso de subtítulos o guardar capturas.
+- **Centro de Ayuda, Actualizaciones y Acerca de (`F1`)**:
+  - Panel deslizante integrado con pestañas para información de la aplicación, guía de atajos y gestor de actualizaciones.
+  - **Búsqueda y descarga automática de actualizaciones**: Consulta las últimas versiones publicadas en GitHub Releases, muestra notas de la versión y descarga/ejecuta el instalador con barra de progreso con un solo clic.
+  - Enlaces rápidos al repositorio oficial y reporte de incidencias en GitHub.
 
 ---
 
@@ -75,6 +79,7 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 | `Doble clic` | Alternar pantalla completa total |
 | `Clic derecho` | Abrir menú emergente de opciones |
 | `Esc` | Salir de pantalla completa o cerrar paneles/cajones |
+| `F1` | Abrir centro de Ayuda, Acerca de y Actualizaciones |
 | `G` | Adelantar subtítulos (+50 ms) |
 | `H` | Retrasar subtítulos (-50 ms) |
 | `[` / `]` | Disminuir / Aumentar velocidad de reproducción |
