@@ -98,9 +98,34 @@ cd NovaPlayer
 dotnet build -c Release
 ```
 
-### Ejecutar:
+### Ejecutar en modo desarrollo:
 ```powershell
 dotnet run --project NovaPlayer.csproj
 ```
 o abrir directamente el ejecutable compilado:
 `NovaPlayer\bin\Release\net9.0-windows\NovaPlayer.exe`
+
+---
+
+## 📦 Instalador de Windows (Setup)
+
+Nova Player incluye un instalador completo para Windows desarrollado con **Inno Setup**:
+
+- **Ubicación del instalador**: `InstallerOutput\NovaPlayer-Setup.exe`
+- **Características de la instalación**:
+  - **Empaquetado autónomo (Self-contained)**: Incluye todo el runtime de .NET 9 y el motor nativo LibVLC x64 (no requiere descargas externas).
+  - **Accesos directos**: En el Menú Inicio y en el Escritorio.
+  - **Anclaje a la barra de tareas**: Configurado con `AppUserModelID: "NovaPlayer.App"` para anclar el acceso directo y agrupar ventanas sin iconos duplicados.
+  - **Reproductor por defecto**: Registra las capacidades multimedia en Windows 10 y Windows 11 (*Configuración > Aplicaciones > Aplicaciones predeterminadas*).
+  - **Menú contextual de Windows**: Añade la opción **"Abrir con Nova Player"** al hacer clic derecho en cualquier archivo de vídeo o audio, y **"Reproducir con Nova Player"** en carpetas.
+  - **Desinstalador limpio**: Desinstala la aplicación y elimina las entradas del registro de forma segura desde el panel de control.
+
+### Generar el instalador desde código fuente:
+```powershell
+# 1. Publicar la aplicación en modo autónomo
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o bin\Publish
+
+# 2. Compilar el instalador con Inno Setup 6
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" NovaPlayerInstaller.iss
+```
+El instalador resultante se generará en `InstallerOutput\NovaPlayer-Setup.exe`.

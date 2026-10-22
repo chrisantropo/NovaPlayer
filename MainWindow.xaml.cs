@@ -144,6 +144,19 @@ public partial class MainWindow : Window
         TxtPlaylistCount.Text = $"({_playlistService.Items.Count})";
 
         UpdateRecentFilesUI();
+
+        Loaded += (s, e) =>
+        {
+            var args = Environment.GetCommandLineArgs();
+            if (args.Length > 1)
+            {
+                var filesToOpen = args.Skip(1).Where(File.Exists).ToArray();
+                if (filesToOpen.Length > 0)
+                {
+                    HandleDroppedFiles(filesToOpen);
+                }
+            }
+        };
     }
 
     protected override void OnSourceInitialized(EventArgs e)
