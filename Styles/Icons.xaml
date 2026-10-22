@@ -1,0 +1,95 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- NovaPlayer Logo Drawing (from NovaPlayer.svg) -->
+    <DrawingGroup x:Key="NovaPlayerLogoDrawingGroup">
+        <GeometryDrawing Brush="#FBFBFC">
+            <GeometryDrawing.Geometry>
+                <PathGeometry Figures="M74.63,153.6c-.02-.23-.28-.51-.27-.9.06-2.11.01-4.09-.08-6.19-.19-4.42,0-8.79-.04-13.25l-.02-2.52.05-42.19c0-2.95.21-5.61.04-8.52-.23-3.91-.15-7.8-.02-11.73.03-.87.35-6.87-.18-6.85.07-.24-.15-.64.31-.74,2.72,9.32,6.87,22.02,12.3,29.89,1.45,2.11,3.18,3.72,5.37,5.06,5.07,3.11,10.28,5.7,15.97,7.5l13.85,4.37-9.38,2.84c-6.78,2.05-13.19,4.73-19.29,8.29-3.34,1.83-5.73,4.35-7.65,7.59-5.09,8.6-7.96,18.02-10.96,27.34Z" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#51D8D1">
+            <GeometryDrawing.Geometry>
+                <GeometryGroup>
+                    <PathGeometry Figures="M16.8.49l-2.69.3c-.91.1-1.7-.5-2.73.08-.79.44-1.81.7-2.74.6.85-1.25,7.28-2.03,8.16-.98Z" />
+                    <PathGeometry Figures="M132.56,143.91c-.25-.3-.94-.47-.76-.92l.43-1.1c-1.19-.39-1.43,2.09-2.22,1.59" />
+                    <PathGeometry Figures="M114.45,119.15c3.44-1.55,6.79-3.13,10.48-4.51,7.76-2.9,15.5-5.08,23.73-7.09-1.14-.45-2.18-.65-3.36-.93-14.33-3.53-29.77-9.05-42.38-16.84-4-2.47-7.17-5.51-9.59-9.61-7.92-13.41-12.02-28.53-13.88-44.17l12.24,7.01,42.41,24.73,1.56.91,44.68,26.03c1.52.89,2.79,1.78,3.89,3.12,2.39,2.92,3.78,6.72,3.56,10.44-.33,5.58-3.37,9.81-8.04,12.53l-17.26,10.04c-.58.34-1.18.68-1.74.92-.62.26-.89.64-1.43.95l-19.73,11.45-.37.21c-.12.07-.13.08-.27.16-.33.18-.63.36-.93.54" />
+                </GeometryGroup>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#2ECAC4">
+            <GeometryDrawing.Geometry>
+                <PathGeometry Figures="M138,145.05l-58.32,34.18c.98-10.77,3.3-20.83,6.96-30.59,1.78-4.6,3.67-8.84,6.2-13.02,2.4-4.32,5.81-7.61,9.95-10.26,3.8-2.43,7.67-4.42,11.66-6.22" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#03C6BE">
+            <GeometryDrawing.Geometry>
+                <GeometryGroup>
+                    <PathGeometry Figures="M58.2,139.08c7.56,14.11,10.8,29.97,11.59,45.99l-47.38,27.66c-3.56,2.08-7.34,2.73-11.37,1.81-6.35-1.82-11-7.6-11-14.38l-.03-88.11c15.83,1.24,31.44,5.06,45.14,12.95,6.11,3.38,9.79,8,13.06,14.08Z" />
+                    <PathGeometry Figures="M16.8.49c2.21-.25,4.02,1.36,5.96,2.49l42.6,24.78c1.61.93,3.03,1.61,4.44,2.76-.97,17.07-4.7,34.09-13.57,48.76-2.93,4.85-6.88,8.56-11.79,11.29C30.43,98.34,16.06,102.05,0,103V12.91C.88,7.75,3.88,3.2,8.64,1.47c.93.1,1.95-.16,2.74-.6,1.03-.58,1.83.02,2.73-.08l2.69-.3Z" />
+                </GeometryGroup>
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#98EAE6">
+            <GeometryDrawing.Geometry>
+                <PathGeometry Figures="M74.63,153.6c.03.42-.09.88-.42,1.48-2.35-9.25-6.97-22.85-12.43-30.82-1.37-2-3.01-3.54-5.09-4.84-9.54-5.89-19.07-8.7-30-11.88l12.03-3.73c5.96-1.84,11.51-4.4,16.88-7.55,2.57-1.52,4.69-3.27,6.36-5.71,5.13-7.51,9.3-19.59,11.69-28.4.1-.36.21-.58.45-.7.53-.02.21,5.98.18,6.85-.14,3.92-.22,7.81.02,11.73.17,2.91-.03,5.57-.04,8.52l-.05,42.19.02,2.52c.04,4.46-.14,8.82.04,13.25.09,2.1.13,4.07.08,6.19-.01.39.25.67.27.9Z" />
+            </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <DrawingImage x:Key="NovaPlayerLogoImage" Drawing="{StaticResource NovaPlayerLogoDrawingGroup}" />
+
+    <!-- Controls Geometry Data -->
+    <Geometry x:Key="PathPlay">M8,5.14V19.14L19,12.14L8,5.14Z</Geometry>
+    <Geometry x:Key="PathPause">M14,19H18V5H14M6,19H10V5H6V19Z</Geometry>
+    <Geometry x:Key="PathStop">M6,6H18V18H6V6Z</Geometry>
+    <Geometry x:Key="PathPrevious">M6,6H8V18H6M9.5,12L18,18V6L9.5,12Z</Geometry>
+    <Geometry x:Key="PathNext">M16,6H18V18H16M6,18L14.5,12L6,6V18Z</Geometry>
+    <Geometry x:Key="PathRewind10">M12.5,3C17.15,3 21.08,6.03 22.47,10.22L20.1,11C19.05,7.81 16.04,5.5 12.5,5.5C10.54,5.5 8.77,6.22 7.38,7.38L10,10H3V3L5.6,5.6C7.45,4 9.85,3 12.5,3M10,12V18H11.5V13.5H13V12H10M14.5,12C13.67,12 13,12.67 13,13.5V16.5C13,17.33 13.67,18 14.5,18H15.5C16.33,18 17,17.33 17,16.5V13.5C17,12.67 16.33,12 15.5,12H14.5M14.5,13.5H15.5V16.5H14.5V13.5Z</Geometry>
+    <Geometry x:Key="PathForward10">M11.5,3C6.85,3 2.92,6.03 1.53,10.22L3.9,11C4.95,7.81 7.96,5.5 11.5,5.5C13.46,5.5 15.23,6.22 16.62,7.38L14,10H21V3L18.4,5.6C16.55,4 14.15,3 11.5,3M10,12V18H11.5V13.5H13V12H10M14.5,12C13.67,12 13,12.67 13,13.5V16.5C13,17.33 13.67,18 14.5,18H15.5C16.33,18 17,17.33 17,16.5V13.5C17,12.67 16.33,12 15.5,12H14.5M14.5,13.5H15.5V16.5H14.5V13.5Z</Geometry>
+    <Geometry x:Key="PathFrameNext">M13,6V18L21.5,12L13,6M4,18L12.5,12L4,6V18M21,6V18H23V6H21Z</Geometry>
+
+    <!-- Volume -->
+    <Geometry x:Key="PathVolumeHigh">M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z</Geometry>
+    <Geometry x:Key="PathVolumeLow">M5,9V15H9L14,20V4L9,9H5M18.5,12C18.5,10.23 17.5,8.71 16,7.97V16C17.5,15.29 18.5,13.76 18.5,12Z</Geometry>
+    <Geometry x:Key="PathVolumeMute">M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L4.27,3M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z</Geometry>
+
+    <!-- Subtitles & Audio -->
+    <Geometry x:Key="PathSubtitles">M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4M4,12H8V14H4V12M14,18H4V16H14V18M20,18H16V16H20V18M20,14H10V12H20V14Z</Geometry>
+    <Geometry x:Key="PathSubtitlesSearch">M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 1,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7,14 5,12 5,9.5C5,7 7,5 9.5,5C12,5 14,7 14,9.5C14,12 12,14 9.5,14M12,8H7V9.5H12V8M10,10.5H7V12H10V10.5Z</Geometry>
+    <Geometry x:Key="PathSync">M12,18A6,6 0 0,1 6,12C6,11 6.25,10.03 6.7,9.2L5.24,7.74C4.46,8.97 4,10.43 4,12A8,8 0 0,0 12,20V23L16,19L12,15V18M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12C18,13 17.75,13.97 17.3,14.8L18.76,16.26C19.54,15.03 20,13.57 20,12A8,8 0 0,0 12,4Z</Geometry>
+    <Geometry x:Key="PathAudioTrack">M12,3V13.55C11.41,13.21 10.73,13 10,13C7.79,13 6,14.79 6,17C6,19.21 7.79,21 10,21C12.21,21 14,19.21 14,17V7H18V3H12Z</Geometry>
+    <Geometry x:Key="PathSpeed">M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z</Geometry>
+    <Geometry x:Key="PathAspectRatio">M19,12H21V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H12V5H5V19H19V12M15,3V5H17.59L10.76,11.83L12.17,13.24L19,6.41V9H21V3H15Z</Geometry>
+
+    <!-- View Modes -->
+    <Geometry x:Key="PathFullscreenEnter">M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z</Geometry>
+    <Geometry x:Key="PathFullscreenExit">M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8V10H14V5H16V8H19Z</Geometry>
+    <Geometry x:Key="PathPictureInPicture">M19,7H11V13H19V7M21,3H3A2,2 0 0,0 1,5V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V5A2,2 0 0,0 21,3M21,19H3V5H21V19Z</Geometry>
+
+    <!-- Playlist & Utility -->
+    <Geometry x:Key="PathFolderOpen">M19,20H4C2.89,20 2,19.1 2,18V6C2,4.89 2.89,4 4,4H10L12,6H19A2,2 0 0,1 21,8H21L4,8V18L6.14,10H23.21L20.93,18.5C20.7,19.37 19.92,20 19,20Z</Geometry>
+    <Geometry x:Key="PathPlaylist">M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z</Geometry>
+    <Geometry x:Key="PathCamera">M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z</Geometry>
+    <Geometry x:Key="PathRepeat">M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z</Geometry>
+    <Geometry x:Key="PathRepeatOne">M13,15V9H12L10,10V11H11.5V15M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z</Geometry>
+    <Geometry x:Key="PathShuffle">M14.83,13.41L13.42,14.82L16.55,17.95L14.5,20H20V14.5L17.96,16.54L14.83,13.41M14.5,4L16.54,6.04L4,18.59L5.41,20L17.96,7.46L20,9.5V4M10.59,9.17L5.41,4L4,5.41L9.17,10.58L10.59,9.17Z</Geometry>
+
+    <!-- Window System -->
+    <Geometry x:Key="PathClose">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</Geometry>
+    <Geometry x:Key="PathMinimize">M20,14H4V10H20</Geometry>
+    <Geometry x:Key="PathMaximize">M4,4H20V20H4V4M6,6V18H18V6H6Z</Geometry>
+    <Geometry x:Key="PathRestore">M4,8H8V4H20V16H16V20H4V8M16,8V14H18V6H10V8H16M6,10V18H14V10H6Z</Geometry>
+    <Geometry x:Key="PathPin">M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z</Geometry>
+
+    <!-- General Utility -->
+    <Geometry x:Key="PathSearch">M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z</Geometry>
+    <Geometry x:Key="PathDownload">M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z</Geometry>
+    <Geometry x:Key="PathCheck">M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z</Geometry>
+    <Geometry x:Key="PathPlus">M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z</Geometry>
+    <Geometry x:Key="PathTrash">M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z</Geometry>
+    <Geometry x:Key="PathLock">M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z</Geometry>
+    <Geometry x:Key="PathLockOpen">M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6H9A3,3 0 0,1 12,3A3,3 0 0,1 15,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z</Geometry>
+    <Geometry x:Key="PathMenu">M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z</Geometry>
+
+</ResourceDictionary>

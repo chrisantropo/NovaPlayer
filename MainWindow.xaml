@@ -1,0 +1,906 @@
+<Window x:Class="NovaPlayer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+        xmlns:models="clr-namespace:NovaPlayer.Models"
+        mc:Ignorable="d"
+        Title="Nova Player" Icon="{StaticResource NovaPlayerLogoImage}" Height="720" Width="1180"
+        MinWidth="700" MinHeight="450"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        Background="{StaticResource VoidBrush}"
+        AllowDrop="True"
+        PreviewDragEnter="Window_DragEnter"
+        PreviewDragOver="Window_DragOver"
+        PreviewDrop="Window_Drop"
+        DragEnter="Window_DragEnter"
+        DragOver="Window_DragOver"
+        Drop="Window_Drop"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        KeyDown="Window_KeyDown"
+        MouseMove="Window_MouseMove"
+        PreviewMouseWheel="Window_PreviewMouseWheel"
+        PreviewMouseRightButtonUp="OverlayRoot_PreviewMouseRightButtonUp"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <DataTemplate x:Key="TrackItemTemplate" DataType="{x:Type models:TrackItem}">
+            <Grid Margin="2,1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Name}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center" />
+                <Border Grid.Column="1" Background="#222B3A" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" 
+                        Visibility="{Binding IsExternal, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Local" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
+    </WindowChrome.WindowChrome>
+
+    <Grid Background="{StaticResource VoidBrush}" AllowDrop="True">
+        <!-- VIDEO RENDERING ENGINE -->
+        <vlc:VideoView x:Name="PlayerVideoView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowDrop="True"
+                       PreviewDragEnter="Window_DragEnter" PreviewDragOver="Window_DragOver" PreviewDrop="Window_Drop"
+                       DragEnter="Window_DragEnter" DragOver="Window_DragOver" Drop="Window_Drop">
+            <!-- OVERLAY LAYER HOSTED INSIDE VIDEOVIEW -->
+            <Grid x:Name="OverlayRoot" Background="#01000000" Focusable="True" AllowDrop="True" ContextMenuOpening="OverlayRoot_ContextMenuOpening"
+                  PreviewDragEnter="Window_DragEnter" PreviewDragOver="Window_DragOver" PreviewDrop="Window_Drop"
+                  DragEnter="Window_DragEnter" DragOver="Window_DragOver" Drop="Window_Drop"
+                  PreviewMouseMove="OverlayRoot_PreviewMouseMove" 
+                  PreviewMouseLeftButtonDown="OverlayRoot_PreviewMouseLeftButtonDown"
+                  PreviewMouseLeftButtonUp="OverlayRoot_PreviewMouseLeftButtonUp"
+                  PreviewMouseRightButtonUp="OverlayRoot_PreviewMouseRightButtonUp"
+                  PreviewMouseWheel="Window_PreviewMouseWheel">
+
+                <!-- POPUP CONTEXT MENU (Right Click) -->
+                <Grid.ContextMenu>
+                    <ContextMenu x:Name="PlayerContextMenu">
+                        <!-- Quick Playback Actions -->
+                        <MenuItem Header="Reproducir / Pausar" InputGestureText="Espacio" Click="BtnPlayPause_Click" />
+                        <MenuItem Header="Detener" Click="MenuStop_Click" />
+                        <Separator />
+
+                        <!-- Mirrored Top Menu Options -->
+                        <MenuItem Header="Medio">
+                            <MenuItem Header="Abrir archivo..." InputGestureText="Ctrl+O" Click="BtnOpenFile_Click" />
+                            <MenuItem Header="Abrir varios archivos..." Click="BtnAddPlaylistFiles_Click" />
+                            <MenuItem Header="Cargar subtítulo local..." Click="BtnLoadLocalSubtitle_Click" />
+                            <MenuItem Header="Archivos recientes" SubmenuOpened="MenuRecentFiles_SubmenuOpened" />
+                            <Separator />
+                            <MenuItem Header="Lista de reproducción" InputGestureText="P" Click="BtnPlaylistToggle_Click" />
+                            <Separator />
+                            <MenuItem Header="Salir" InputGestureText="Alt+F4" Click="BtnClose_Click" />
+                        </MenuItem>
+
+                        <MenuItem Header="Reproducción">
+                            <MenuItem Header="Reproducir / Pausar" InputGestureText="Espacio" Click="BtnPlayPause_Click" />
+                            <MenuItem Header="Detener" Click="MenuStop_Click" />
+                            <MenuItem Header="Avanzar 10s" InputGestureText="→" Click="BtnForward10_Click" />
+                            <MenuItem Header="Retroceder 10s" InputGestureText="←" Click="BtnRewind10_Click" />
+                            <MenuItem Header="Fotograma siguiente" Click="BtnFrameStep_Click" />
+                            <Separator />
+                            <MenuItem Header="Velocidad">
+                                <MenuItem Header="0.25x" Click="MenuSpeed_Click" Tag="0.25" />
+                                <MenuItem Header="0.5x" Click="MenuSpeed_Click" Tag="0.5" />
+                                <MenuItem Header="0.75x" Click="MenuSpeed_Click" Tag="0.75" />
+                                <MenuItem Header="1.0x (Normal)" Click="MenuSpeed_Click" Tag="1.0" />
+                                <MenuItem Header="1.25x" Click="MenuSpeed_Click" Tag="1.25" />
+                                <MenuItem Header="1.5x" Click="MenuSpeed_Click" Tag="1.5" />
+                                <MenuItem Header="2.0x" Click="MenuSpeed_Click" Tag="2.0" />
+                                <MenuItem Header="3.0x" Click="MenuSpeed_Click" Tag="3.0" />
+                            </MenuItem>
+                        </MenuItem>
+
+                        <MenuItem x:Name="ContextAudioSubmenu" Header="Audio">
+                            <MenuItem Header="Pistas de audio" SubmenuOpened="MenuAudioTracks_SubmenuOpened" />
+                            <Separator />
+                            <MenuItem Header="Silenciar / Activar" InputGestureText="M" Click="BtnVolume_Click" />
+                            <MenuItem Header="Subir volumen (+1%)" InputGestureText="↑" Click="MenuVolUp_Click" />
+                            <MenuItem Header="Bajar volumen (-1%)" InputGestureText="↓" Click="MenuVolDown_Click" />
+                        </MenuItem>
+
+                        <MenuItem x:Name="ContextSubtitlesSubmenu" Header="Subtítulos">
+                            <MenuItem Header="Pistas de subtítulos" SubmenuOpened="MenuSubtitlesTracks_SubmenuOpened" />
+                            <Separator />
+                            <MenuItem Header="🔍 Buscar subtítulos online..." InputGestureText="Ctrl+Shift+S" Click="BtnOpenOnlineSubtitles_Click" />
+                            <MenuItem Header="📁 Cargar subtítulo local..." Click="BtnLoadLocalSubtitle_Click" />
+                            <Separator />
+                            <MenuItem Header="Sincronización">
+                                <MenuItem Header="Adelantar (+50 ms)" InputGestureText="H" Click="BtnSubDelay_Plus50_Click" />
+                                <MenuItem Header="Retrasar (-50 ms)" InputGestureText="G" Click="BtnSubDelay_Minus50_Click" />
+                                <MenuItem Header="Adelantar (+100 ms)" Click="BtnSubDelay_Plus100_Click" />
+                                <MenuItem Header="Retrasar (-100 ms)" Click="BtnSubDelay_Minus100_Click" />
+                                <MenuItem Header="Restablecer (0 ms)" Click="BtnSubDelayReset_Click" />
+                            </MenuItem>
+                        </MenuItem>
+
+                        <MenuItem Header="Vídeo">
+                            <MenuItem Header="Pantalla completa" InputGestureText="F" Click="BtnFullscreen_Click" />
+                            <MenuItem Header="Modo Mini-Reproductor (PiP)" Click="BtnPip_Click" />
+                            <MenuItem x:Name="ContextPinOnTop" Header="Fijar en primer plano (Always on top)" IsCheckable="True" Click="BtnPinOnTop_Click" />
+                            <Separator />
+                            <MenuItem Header="Relación de aspecto">
+                                <MenuItem Header="Original (Default)" Click="MenuAspect_Click" Tag="Default" />
+                                <MenuItem Header="16:9" Click="MenuAspect_Click" Tag="16:9" />
+                                <MenuItem Header="4:3" Click="MenuAspect_Click" Tag="4:3" />
+                                <MenuItem Header="21:9 (Ultrawide)" Click="MenuAspect_Click" Tag="21:9" />
+                                <MenuItem Header="1:1" Click="MenuAspect_Click" Tag="1:1" />
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Captura de pantalla" InputGestureText="S" Click="BtnSnapshot_Click" />
+                        </MenuItem>
+
+                        <MenuItem Header="Barras">
+                            <MenuItem x:Name="ContextPinHud" Header="📌 Fijar barras siempre visibles" IsCheckable="True" Click="TogglePinHud_Click" />
+                            <MenuItem x:Name="ContextAutoHud" Header="⏱ Ocultar automáticamente tras 5s de inactividad" IsCheckable="True" Click="ToggleAutoHud_Click" />
+                        </MenuItem>
+
+                        <Separator />
+                        <!-- Quick Window / Display Shortcuts -->
+                        <MenuItem Header="Pantalla completa" InputGestureText="F" Click="BtnFullscreen_Click" />
+                        <MenuItem Header="Salir" InputGestureText="Alt+F4" Click="BtnClose_Click" />
+                    </ContextMenu>
+                </Grid.ContextMenu>
+
+                <!-- CAMERA SHUTTER FLASH OVERLAY -->
+                <Rectangle x:Name="SnapshotFlash" Fill="White" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Panel.ZIndex="999" />
+
+                <!-- 1. EMPTY / WELCOME STATE (Visible when no video loaded) -->
+                <Grid x:Name="WelcomePanel" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible" AllowDrop="True"
+                      PreviewDragEnter="Window_DragEnter" PreviewDragOver="Window_DragOver" PreviewDrop="Window_Drop"
+                      DragEnter="Window_DragEnter" DragOver="Window_DragOver" Drop="Window_Drop">
+                    <Border Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                            BorderThickness="1" CornerRadius="16" Padding="40,32" MaxWidth="600">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.5" Color="Black" />
+                        </Border.Effect>
+                        <StackPanel HorizontalAlignment="Center">
+                            <!-- Glowing App Icon -->
+                            <Grid Width="84" Height="84" HorizontalAlignment="Center" Margin="0,0,0,16">
+                                <Ellipse Fill="{StaticResource AccentGlowBrush}">
+                                    <Ellipse.Effect>
+                                        <BlurEffect Radius="24" />
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                <Image Source="{StaticResource NovaPlayerLogoImage}" Width="72" Height="72" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image.Effect>
+                                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.6" Color="#03C6BE" />
+                                    </Image.Effect>
+                                </Image>
+                            </Grid>
+
+                            <TextBlock Text="Nova Player" FontFamily="{StaticResource FontAudiowide}" FontSize="26" FontWeight="Normal" Foreground="{StaticResource TextPrimaryBrush}" 
+                                       HorizontalAlignment="Center" Margin="0,0,0,6" />
+                            <TextBlock Text="Reproductor multimedia de última generación" FontSize="13" 
+                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,20" />
+
+                            <!-- Drag and drop target box -->
+                            <Border BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1.5" CornerRadius="12" 
+                                    Background="#111622" Padding="28,20" Margin="0,0,0,20">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Path Data="{StaticResource PathFolderOpen}" Fill="{StaticResource AccentBrush}" Width="32" Height="32" Stretch="Uniform" Margin="0,0,0,10" />
+                                    <TextBlock Text="Arrastra y suelta cualquier vídeo o subtítulo aquí" FontSize="14" FontWeight="SemiBold" 
+                                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                    <TextBlock Text="o haz clic en el botón inferior para buscar un archivo" FontSize="12" 
+                                               Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Open File Button -->
+                            <Button Style="{StaticResource AccentButton}" Content="Abrir archivo de vídeo..." 
+                                    Click="BtnOpenFile_Click" HorizontalAlignment="Center" Margin="0,0,0,16" Padding="24,10" />
+
+                            <!-- RECENTLY PLAYED FILES SECTION (Visible at startup) -->
+                            <Border x:Name="BorderRecentFiles" Background="#0C101A" BorderBrush="{StaticResource GlassBorderBrush}" 
+                                    BorderThickness="1" CornerRadius="12" Margin="0,0,0,16" Padding="14,10" Width="480" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Section Header -->
+                                    <Grid Grid.Row="0" Margin="2,0,2,8">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="{StaticResource PathFolderOpen}" Fill="{StaticResource AccentBrush}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" />
+                                            <TextBlock Text="Archivos reproducidos recientemente" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                        <Button Style="{StaticResource WindowCtrlButton}" Content="Limpiar" FontSize="11" 
+                                                Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" Padding="6,2" 
+                                                Click="BtnClearRecent_Click" ToolTip="Borrar historial reciente" />
+                                    </Grid>
+
+                                    <!-- Recent Items -->
+                                    <ItemsControl x:Name="ListRecentFiles" Grid.Row="1">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:RecentFileItem}">
+                                                <Border Background="Transparent" CornerRadius="8" Padding="8,6" Margin="0,2" Cursor="Hand"
+                                                        MouseLeftButtonDown="RecentItem_MouseLeftButtonDown">
+                                                    <Border.Style>
+                                                        <Style TargetType="{x:Type Border}">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource GlassHoverBrush}" />
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Border Grid.Column="0" Background="#1E2738" CornerRadius="6" Width="24" Height="24" Margin="0,0,10,0">
+                                                            <Path Data="{StaticResource PathPlay}" Fill="{StaticResource AccentBrush}" Width="9" Height="9" Stretch="Uniform" Margin="2,0,0,0" />
+                                                        </Border>
+
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                                                            <TextBlock Text="{Binding DirectoryName}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,2,0">
+                                                            <Border Background="#161E2E" CornerRadius="4" Padding="5,2" Margin="0,0,6,0">
+                                                                <TextBlock Text="{Binding Extension}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding FormattedLastPlayed}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </Border>
+
+                            <!-- Supported Formats Badges -->
+                            <WrapPanel HorizontalAlignment="Center">
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="MKV" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="MP4" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="AVI" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="HEVC / H.265" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="AV1" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="WEBM" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="TS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                                <Border Background="#1E2433" CornerRadius="4" Padding="6,2" Margin="3">
+                                    <TextBlock Text="SRT / ASS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 2. TOAST NOTIFICATION BADGE (Floating center-top pill) -->
+                <Border x:Name="NotificationToast" Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource AccentBrush}" 
+                        BorderThickness="1" CornerRadius="20" Padding="18,8" HorizontalAlignment="Center" VerticalAlignment="Top" 
+                        Margin="0,60,0,0" Opacity="0" IsHitTestVisible="False">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.6" Color="Black" />
+                    </Border.Effect>
+                    <TextBlock x:Name="TxtNotification" Text="Volumen: 100%" FontSize="13" FontWeight="SemiBold" 
+                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                </Border>
+
+                <!-- 3. TOP BAR (Custom TitleBar, Options Menu & Window Actions) -->
+                <Border x:Name="TopBar" Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="0,0,0,1" Height="42" VerticalAlignment="Top"
+                        PreviewMouseLeftButtonDown="TopBar_PreviewMouseLeftButtonDown">
+                    <Grid Margin="12,0,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: App Brand & Options Menu -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Background="Transparent" Cursor="SizeAll" 
+                                        ToolTip="Arrastrar para mover la ventana" Margin="0,0,12,0">
+                                <Image Source="{StaticResource NovaPlayerLogoImage}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Nova Player" FontFamily="{StaticResource FontAudiowide}" FontSize="12" FontWeight="Normal" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- TOP MENU OF OPTIONS -->
+                            <Menu x:Name="TopMainMenu" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <MenuItem Header="_Medio">
+                                    <MenuItem Header="Abrir archivo..." InputGestureText="Ctrl+O" Click="BtnOpenFile_Click" />
+                                    <MenuItem Header="Abrir varios archivos..." Click="BtnAddPlaylistFiles_Click" />
+                                    <MenuItem Header="Cargar subtítulo local..." Click="BtnLoadLocalSubtitle_Click" />
+                                    <MenuItem Header="Archivos recientes" SubmenuOpened="MenuRecentFiles_SubmenuOpened" />
+                                    <Separator />
+                                    <MenuItem Header="Lista de reproducción" InputGestureText="P" Click="BtnPlaylistToggle_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Salir" InputGestureText="Alt+F4" Click="BtnClose_Click" />
+                                </MenuItem>
+                                <MenuItem Header="_Reproducción">
+                                    <MenuItem Header="Reproducir / Pausar" InputGestureText="Espacio" Click="BtnPlayPause_Click" />
+                                    <MenuItem Header="Detener" Click="MenuStop_Click" />
+                                    <MenuItem Header="Avanzar 10s" InputGestureText="→" Click="BtnForward10_Click" />
+                                    <MenuItem Header="Retroceder 10s" InputGestureText="←" Click="BtnRewind10_Click" />
+                                    <MenuItem Header="Fotograma siguiente" Click="BtnFrameStep_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Velocidad">
+                                        <MenuItem Header="0.25x" Click="MenuSpeed_Click" Tag="0.25" />
+                                        <MenuItem Header="0.5x" Click="MenuSpeed_Click" Tag="0.5" />
+                                        <MenuItem Header="0.75x" Click="MenuSpeed_Click" Tag="0.75" />
+                                        <MenuItem Header="1.0x (Normal)" Click="MenuSpeed_Click" Tag="1.0" />
+                                        <MenuItem Header="1.25x" Click="MenuSpeed_Click" Tag="1.25" />
+                                        <MenuItem Header="1.5x" Click="MenuSpeed_Click" Tag="1.5" />
+                                        <MenuItem Header="2.0x" Click="MenuSpeed_Click" Tag="2.0" />
+                                        <MenuItem Header="3.0x" Click="MenuSpeed_Click" Tag="3.0" />
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem Header="_Audio">
+                                    <MenuItem x:Name="MenuAudioTracksSubmenu" Header="Pistas de audio" SubmenuOpened="MenuAudioTracks_SubmenuOpened" />
+                                    <Separator />
+                                    <MenuItem Header="Silenciar / Activar" InputGestureText="M" Click="BtnVolume_Click" />
+                                    <MenuItem Header="Subir volumen (+1%)" InputGestureText="↑" Click="MenuVolUp_Click" />
+                                    <MenuItem Header="Bajar volumen (-1%)" InputGestureText="↓" Click="MenuVolDown_Click" />
+                                </MenuItem>
+                                <MenuItem Header="_Subtítulos">
+                                    <MenuItem x:Name="MenuSubtitlesTracksSubmenu" Header="Pistas de subtítulos" SubmenuOpened="MenuSubtitlesTracks_SubmenuOpened" />
+                                    <Separator />
+                                    <MenuItem Header="🔍 Buscar subtítulos online..." InputGestureText="Ctrl+Shift+S" Click="BtnOpenOnlineSubtitles_Click" />
+                                    <MenuItem Header="📁 Cargar subtítulo local..." Click="BtnLoadLocalSubtitle_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Sincronización">
+                                        <MenuItem Header="Adelantar (+50 ms)" InputGestureText="H" Click="BtnSubDelay_Plus50_Click" />
+                                        <MenuItem Header="Retrasar (-50 ms)" InputGestureText="G" Click="BtnSubDelay_Minus50_Click" />
+                                        <MenuItem Header="Adelantar (+100 ms)" Click="BtnSubDelay_Plus100_Click" />
+                                        <MenuItem Header="Retrasar (-100 ms)" Click="BtnSubDelay_Minus100_Click" />
+                                        <MenuItem Header="Restablecer (0 ms)" Click="BtnSubDelayReset_Click" />
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem Header="_Vídeo">
+                                    <MenuItem Header="Pantalla completa" InputGestureText="F" Click="BtnFullscreen_Click" />
+                                    <MenuItem Header="Modo Mini-Reproductor (PiP)" Click="BtnPip_Click" />
+                                    <MenuItem x:Name="MenuPinOnTop" Header="Fijar en primer plano (Always on top)" IsCheckable="True" Click="BtnPinOnTop_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Relación de aspecto">
+                                        <MenuItem Header="Original (Default)" Click="MenuAspect_Click" Tag="Default" />
+                                        <MenuItem Header="16:9" Click="MenuAspect_Click" Tag="16:9" />
+                                        <MenuItem Header="4:3" Click="MenuAspect_Click" Tag="4:3" />
+                                        <MenuItem Header="21:9 (Ultrawide)" Click="MenuAspect_Click" Tag="21:9" />
+                                        <MenuItem Header="1:1" Click="MenuAspect_Click" Tag="1:1" />
+                                    </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Captura de pantalla" InputGestureText="S" Click="BtnSnapshot_Click" />
+                                </MenuItem>
+                                <MenuItem Header="_Barras">
+                                    <MenuItem x:Name="MenuPinHud" Header="📌 Fijar barras siempre visibles" IsCheckable="True" Click="TogglePinHud_Click" />
+                                    <MenuItem x:Name="MenuAutoHud" Header="⏱ Ocultar automáticamente tras 5s de inactividad" IsCheckable="True" Click="ToggleAutoHud_Click" />
+                                </MenuItem>
+                            </Menu>
+                        </StackPanel>
+
+                        <!-- Center: Media Title & Quality Badge -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Background="Transparent" Cursor="SizeAll" ToolTip="Arrastrar para mover la ventana">
+                            <TextBlock x:Name="TxtMediaTitle" Text="Sin archivo cargado" FontSize="12" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="380" />
+                            <Border x:Name="BadgeMediaInfo" Margin="8,0,0,0" Background="#222B3A" CornerRadius="4" Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtMediaInfo" Text="1080p • H.264" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Right: Window Actions, Pin HUD & Controls -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Pin HUD Toggle (Always visible vs Auto-hide 5s) -->
+                            <Button x:Name="BtnPinHud" Style="{StaticResource IconButton}" 
+                                    ToolTip="Fijar barras siempre visibles / Ocultar tras 5s" 
+                                    Click="TogglePinHud_Click" Margin="0,0,2,0">
+                                <Path x:Name="PathPinHudIcon" Data="{StaticResource PathLockOpen}" 
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                      Width="13" Height="13" Stretch="Uniform" />
+                            </Button>
+
+                            <!-- Aspect Ratio -->
+                            <Button Style="{StaticResource IconButton}" ToolTip="Relación de aspecto" Click="BtnAspectRatio_Click" Margin="0,0,2,0">
+                                <Path Data="{StaticResource PathAspectRatio}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="15" Height="15" Stretch="Uniform" />
+                            </Button>
+
+                            <!-- Always On Top Pin -->
+                            <Button x:Name="BtnPinOnTop" Style="{StaticResource IconButton}" ToolTip="Fijar en primer plano (Always on top)" Click="BtnPinOnTop_Click" Margin="0,0,2,0">
+                                <Path x:Name="PathPinOnTopIcon" Data="{StaticResource PathPin}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+
+                            <!-- Mini Player / Picture-in-Picture -->
+                            <Button Style="{StaticResource IconButton}" ToolTip="Modo Mini-Reproductor (PiP)" Click="BtnPip_Click" Margin="0,0,4,0">
+                                <Path Data="{StaticResource PathPictureInPicture}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="15" Height="15" Stretch="Uniform" />
+                            </Button>
+
+                            <Rectangle Width="1" Height="18" Fill="{StaticResource GlassBorderBrush}" Margin="2,0,6,0" />
+
+                            <!-- Minimize -->
+                            <Button Style="{StaticResource WindowCtrlButton}" ToolTip="Minimizar" Click="BtnMinimize_Click">
+                                <Path Data="{StaticResource PathMinimize}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="11" Height="11" Stretch="Uniform" />
+                            </Button>
+
+                            <!-- Maximize / Restore -->
+                            <Button x:Name="BtnMaximize" Style="{StaticResource WindowCtrlButton}" ToolTip="Maximizar" Click="BtnMaximize_Click">
+                                <Path x:Name="PathMaxIcon" Data="{StaticResource PathMaximize}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="11" Height="11" Stretch="Uniform" />
+                            </Button>
+
+                            <!-- Close -->
+                            <Button Style="{StaticResource WindowCloseButton}" ToolTip="Cerrar" Click="BtnClose_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="11" Height="11" Stretch="Uniform" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 4. BOTTOM FLOATING HUD CONTROLS -->
+                <Border x:Name="BottomBar" Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1" CornerRadius="14" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" 
+                        Margin="24,0,24,20" Padding="16,10">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.5" Color="Black" />
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- SEEKBAR ROW -->
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Current Time -->
+                            <TextBlock x:Name="TxtCurrentTime" Grid.Column="0" Text="00:00:00" FontSize="12" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+                            <!-- Seek Slider -->
+                            <Slider x:Name="SeekSlider" Grid.Column="1" Style="{StaticResource ModernSeekSlider}" 
+                                    Minimum="0" Maximum="100" Value="0"
+                                    IsMoveToPointEnabled="False"
+                                    PreviewMouseDown="SeekSlider_PreviewMouseDown"
+                                    PreviewMouseMove="SeekSlider_PreviewMouseMove"
+                                    PreviewMouseUp="SeekSlider_PreviewMouseUp"
+                                    ValueChanged="SeekSlider_ValueChanged" />
+
+                            <!-- Total / Remaining Time -->
+                            <TextBlock x:Name="TxtTotalTime" Grid.Column="2" Text="00:00:00" FontSize="12" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+
+                        <!-- CONTROLS ROW -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left Controls: Volume & File Open -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Open File -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Abrir archivo... (Ctrl+O)" Click="BtnOpenFile_Click">
+                                    <Path Data="{StaticResource PathFolderOpen}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="17" Height="17" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Volume Button (Mute/Unmute) -->
+                                <Button x:Name="BtnVolume" Style="{StaticResource IconButton}" ToolTip="Silenciar / Activar sonido (M)" Click="BtnVolume_Click" Margin="6,0,0,0">
+                                    <Path x:Name="PathVolumeIcon" Data="{StaticResource PathVolumeHigh}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="17" Height="17" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Volume Slider -->
+                                <Slider x:Name="VolumeSlider" Style="{StaticResource ModernVolumeSlider}" Width="85" Minimum="0" Maximum="200" Value="100" 
+                                        ValueChanged="VolumeSlider_ValueChanged" VerticalAlignment="Center" Margin="6,0,6,0" />
+
+                                <!-- Volume Text Percentage -->
+                                <TextBlock x:Name="TxtVolumeLevel" Text="100%" FontSize="11" FontWeight="SemiBold" 
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Width="36" />
+                            </StackPanel>
+
+                            <!-- Center Controls: Playback Buttons -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Previous in playlist -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Anterior vídeo en la lista" Click="BtnPrevious_Click">
+                                    <Path Data="{StaticResource PathPrevious}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Rewind 10s -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Retroceder 10 segundos (Flecha izquierda)" Click="BtnRewind10_Click" Margin="4,0,0,0">
+                                    <Path Data="{StaticResource PathRewind10}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="18" Height="18" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Hero Play / Pause -->
+                                <Button x:Name="BtnPlayPause" Style="{StaticResource HeroPlayButton}" ToolTip="Reproducir / Pausar (Espacio)" Click="BtnPlayPause_Click" Margin="10,0,10,0">
+                                    <Path x:Name="PathPlayPauseIcon" Data="{StaticResource PathPlay}" Fill="{StaticResource VoidBrush}" Width="20" Height="20" Stretch="Uniform" Margin="2,0,0,0" />
+                                </Button>
+
+                                <!-- Forward 10s -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Avanzar 10 segundos (Flecha derecha)" Click="BtnForward10_Click" Margin="0,0,4,0">
+                                    <Path Data="{StaticResource PathForward10}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="18" Height="18" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Next in playlist -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Siguiente vídeo en la lista" Click="BtnNext_Click">
+                                    <Path Data="{StaticResource PathNext}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Next Frame -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Avanzar 1 fotograma" Click="BtnFrameStep_Click" Margin="4,0,0,0">
+                                    <Path Data="{StaticResource PathFrameNext}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Right Controls: Speed, Audio, Subtitles, Snapshot, Playlist, Fullscreen -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <!-- Speed Selector Button -->
+                                <Button x:Name="BtnSpeed" Style="{StaticResource GlassButton}" Padding="8,4" Margin="0,0,6,0" 
+                                        ToolTip="Velocidad de reproducción ([ y ])" Click="BtnSpeed_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PathSpeed}" Fill="{StaticResource AccentBrush}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" />
+                                        <TextBlock x:Name="TxtSpeed" Text="1.0x" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Audio Track Selector -->
+                                <Button x:Name="BtnAudioTracks" Style="{StaticResource IconButton}" ToolTip="Pistas de audio (B)" Click="BtnAudioTracks_Click" Margin="0,0,4,0">
+                                    <Path Data="{StaticResource PathAudioTrack}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Subtitles Menu Button (Active/Inactive Glow) -->
+                                <Button x:Name="BtnSubtitles" Style="{StaticResource IconButton}" ToolTip="Subtítulos y sincronización (C)" Click="BtnSubtitles_Click" Margin="0,0,4,0">
+                                    <Path x:Name="PathSubtitlesIcon" Data="{StaticResource PathSubtitles}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="18" Height="18" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Take Snapshot / Screenshot -->
+                                <Button Style="{StaticResource IconButton}" ToolTip="Captura de pantalla (S)" Click="BtnSnapshot_Click" Margin="0,0,4,0">
+                                    <Path Data="{StaticResource PathCamera}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Playlist Drawer Toggle -->
+                                <Button x:Name="BtnPlaylistToggle" Style="{StaticResource IconButton}" ToolTip="Lista de reproducción (P)" Click="BtnPlaylistToggle_Click" Margin="0,0,4,0">
+                                    <Path Data="{StaticResource PathPlaylist}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="17" Height="17" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Fullscreen Toggle -->
+                                <Button x:Name="BtnFullscreen" Style="{StaticResource IconButton}" ToolTip="Pantalla completa (F / F11)" Click="BtnFullscreen_Click" Margin="0,0,0,0">
+                                    <Path x:Name="PathFullscreenIcon" Data="{StaticResource PathFullscreenEnter}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- 5. SUBTITLES & AUDIO FLYOUT MENU (POPOVER) -->
+                <Border x:Name="SubtitlesFlyout" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="16" Width="360" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                        Margin="0,0,90,95" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.6" Color="Black" />
+                    </Border.Effect>
+                    <StackPanel>
+                        <!-- Header -->
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock Text="Subtítulos y Sincronización" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="BtnCloseSubtitlesFlyout_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{StaticResource TextSecondaryBrush}" Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <!-- Subtitle Track Selector -->
+                        <TextBlock Text="Pista de subtítulos:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                        <ComboBox x:Name="ComboSubtitles" Style="{StaticResource ModernComboBox}" 
+                                  ItemTemplate="{StaticResource TrackItemTemplate}"
+                                  Margin="0,0,0,14" SelectionChanged="ComboSubtitles_SelectionChanged" />
+
+                        <!-- SUBTITLE SYNCHRONIZATION CONTROLS -->
+                        <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="{StaticResource PathSync}" Fill="{StaticResource AccentBrush}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" />
+                                        <TextBlock Text="Sincronización (Delay)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="TxtSubtitleDelay" Text="0 ms" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Right" />
+                                </Grid>
+
+                                <!-- Stepper Buttons: -100ms, -25ms, +25ms, +100ms -->
+                                <UniformGrid Columns="4" Margin="0,0,0,8">
+                                    <Button Style="{StaticResource GlassButton}" Content="-100ms" FontSize="11" Padding="4,4" Margin="2" Click="BtnSubDelay_Minus100_Click" />
+                                    <Button Style="{StaticResource GlassButton}" Content="-25ms" FontSize="11" Padding="4,4" Margin="2" Click="BtnSubDelay_Minus25_Click" />
+                                    <Button Style="{StaticResource GlassButton}" Content="+25ms" FontSize="11" Padding="4,4" Margin="2" Click="BtnSubDelay_Plus25_Click" />
+                                    <Button Style="{StaticResource GlassButton}" Content="+100ms" FontSize="11" Padding="4,4" Margin="2" Click="BtnSubDelay_Plus100_Click" />
+                                </UniformGrid>
+
+                                <!-- Reset & hotkey tip -->
+                                <Grid>
+                                    <TextBlock Text="Teclas rápidas: G / H (+/-50ms)" FontSize="10" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                    <Button Style="{StaticResource GlassButton}" Content="Restablecer" FontSize="10" Padding="8,2" HorizontalAlignment="Right" Click="BtnSubDelayReset_Click" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Load External File -->
+                        <Button Style="{StaticResource GlassButton}" Content="📁 Cargar subtítulo local (.srt, .vtt, .ass)..." 
+                                HorizontalAlignment="Stretch" Margin="0,0,0,8" Click="BtnLoadLocalSubtitle_Click" />
+
+                        <!-- Online Search Button -->
+                        <Button Style="{StaticResource AccentButton}" Content="🔍 Buscar subtítulos online..." 
+                                HorizontalAlignment="Stretch" Click="BtnOpenOnlineSubtitles_Click" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 6. AUDIO TRACKS FLYOUT MENU -->
+                <Border x:Name="AudioFlyout" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="16" Width="320" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                        Margin="0,0,135,95" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.6" Color="Black" />
+                    </Border.Effect>
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock Text="Pistas de Audio" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="BtnCloseAudioFlyout_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{StaticResource TextSecondaryBrush}" Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <ListBox x:Name="ListAudioTracks" Background="Transparent" BorderThickness="0" SelectionChanged="ListAudioTracks_SelectionChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="1" 
+                                            CornerRadius="6" Padding="10,8" Margin="0,2">
+                                        <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- 7. ONLINE SUBTITLES SEARCH DRAWER (Right Slide Panel) -->
+                <Border x:Name="OnlineSubtitlesDrawer" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1,0,0,0" Width="440" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.7" Color="Black" />
+                    </Border.Effect>
+                    <Grid Margin="20,45,20,20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Drawer Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource PathSubtitlesSearch}" Fill="{StaticResource AccentBrush}" Width="18" Height="18" Stretch="Uniform" Margin="0,0,8,0" />
+                                <TextBlock Text="Subtítulos Online" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="BtnCloseOnlineSubtitlesDrawer_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{StaticResource TextSecondaryBrush}" Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <!-- Search Box & Trigger -->
+                        <Grid Grid.Row="1" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="TxtSearchSubtitlesQuery" Grid.Column="0" Style="{StaticResource ModernTextBox}" 
+                                     Text="" KeyDown="TxtSearchSubtitlesQuery_KeyDown" />
+                            <Button x:Name="BtnExecuteSubSearch" Grid.Column="1" Style="{StaticResource AccentButton}" Content="Buscar" 
+                                    Margin="8,0,0,0" Click="BtnExecuteSubSearch_Click" />
+                        </Grid>
+
+                        <!-- Filters: Language Pills -->
+                        <StackPanel Grid.Row="2" Margin="0,0,0,14">
+                            <TextBlock Text="Filtrar por idioma:" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
+                            <WrapPanel x:Name="PanelLanguageFilters">
+                                <RadioButton Content="🇪🇸 Español" Tag="es" IsChecked="True" Style="{x:Null}" Margin="0,0,8,6" 
+                                             Foreground="{StaticResource TextPrimaryBrush}" Checked="LangFilter_Checked" />
+                                <RadioButton Content="🇺🇸 English" Tag="en" Style="{x:Null}" Margin="0,0,8,6" 
+                                             Foreground="{StaticResource TextPrimaryBrush}" Checked="LangFilter_Checked" />
+                                <RadioButton Content="🇫🇷 Français" Tag="fr" Style="{x:Null}" Margin="0,0,8,6" 
+                                             Foreground="{StaticResource TextPrimaryBrush}" Checked="LangFilter_Checked" />
+                                <RadioButton Content="🇩🇪 Deutsch" Tag="de" Style="{x:Null}" Margin="0,0,8,6" 
+                                             Foreground="{StaticResource TextPrimaryBrush}" Checked="LangFilter_Checked" />
+                                <RadioButton Content="🌐 Todos" Tag="all" Style="{x:Null}" Margin="0,0,8,6" 
+                                             Foreground="{StaticResource TextPrimaryBrush}" Checked="LangFilter_Checked" />
+                            </WrapPanel>
+
+                            <!-- Hash status badge -->
+                            <TextBlock x:Name="TxtHashStatus" Text="Hash de vídeo calculado para coincidencia exacta" FontSize="11" 
+                                       Foreground="{StaticResource AccentBrush}" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <!-- Search Results List -->
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!-- Loading Indicator -->
+                                <Border x:Name="SubSearchLoadingIndicator" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,10" Visibility="Collapsed">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="Buscando subtítulos en OpenSubtitles &amp; Subdl..." FontSize="13" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                                        <ProgressBar IsIndeterminate="True" Height="4" Width="200" Foreground="{StaticResource AccentBrush}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Results Items -->
+                                <ItemsControl x:Name="ListOnlineSubtitles">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                                                    BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- Title & Language Flag -->
+                                                    <Grid Grid.Row="0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding FlagEmoji}" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding LanguageName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                                            <Border Background="#1E2838" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Format}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding RatingFormatted}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                    </Grid>
+
+                                                    <!-- Release info -->
+                                                    <TextBlock Grid.Row="1" Text="{Binding ReleaseName}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" 
+                                                               TextTrimming="CharacterEllipsis" Margin="0,4,0,6" />
+
+                                                    <!-- Downloads and Action Button -->
+                                                    <Grid Grid.Row="2" Margin="0,4,0,0">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Provider}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0" />
+                                                            <TextBlock Text="{Binding DownloadsFormatted}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                                                        </StackPanel>
+
+                                                        <Button Style="{StaticResource AccentButton}" Content="Descargar y Aplicar" FontSize="11" Padding="12,5" 
+                                                                HorizontalAlignment="Right" Click="BtnDownloadSubtitleItem_Click" Tag="{Binding}" />
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- No results message -->
+                                <TextBlock x:Name="TxtNoSubResults" Text="No se encontraron subtítulos. Prueba buscando con otro título o idioma." 
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Bottom Drawer hint -->
+                        <Border Grid.Row="4" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+                            <TextBlock Text="Los subtítulos descargados se sincronizan automáticamente con el vídeo." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- 8. PLAYLIST DRAWER (Right Slide Panel) -->
+                <Border x:Name="PlaylistDrawer" Background="{StaticResource SurfaceElevatedBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                        BorderThickness="1,0,0,0" Width="380" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.7" Color="Black" />
+                    </Border.Effect>
+                    <Grid Margin="18,45,18,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Playlist Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource PathPlaylist}" Fill="{StaticResource AccentBrush}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" />
+                                <TextBlock Text="Lista de Reproducción" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock x:Name="TxtPlaylistCount" Text="(0)" FontSize="13" Foreground="{StaticResource TextMutedBrush}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right" Click="BtnClosePlaylistDrawer_Click">
+                                <Path Data="{StaticResource PathClose}" Fill="{StaticResource TextSecondaryBrush}" Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <!-- Toolbar: Add files, Repeat, Shuffle, Clear -->
+                        <Grid Grid.Row="1" Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource GlassButton}" Padding="8,5" ToolTip="Añadir vídeos a la lista" Click="BtnAddPlaylistFiles_Click" Margin="0,0,6,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource PathPlus}" Fill="{StaticResource AccentBrush}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" />
+                                        <TextBlock Text="Añadir" FontSize="11" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="BtnRepeatMode" Style="{StaticResource IconButton}" ToolTip="Modo Repetir" Click="BtnRepeatMode_Click" Margin="0,0,4,0">
+                                    <Path x:Name="PathRepeatIcon" Data="{StaticResource PathRepeat}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="15" Height="15" Stretch="Uniform" />
+                                </Button>
+                                <Button x:Name="BtnShuffle" Style="{StaticResource IconButton}" ToolTip="Modo Aleatorio" Click="BtnShuffle_Click">
+                                    <Path Data="{StaticResource PathShuffle}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="15" Height="15" Stretch="Uniform" />
+                                </Button>
+                            </StackPanel>
+
+                            <Button Style="{StaticResource IconButton}" ToolTip="Vaciar lista" HorizontalAlignment="Right" Click="BtnClearPlaylist_Click">
+                                <Path Data="{StaticResource PathTrash}" Fill="{StaticResource TextMutedBrush}" Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                        </Grid>
+
+                        <!-- Playlist ListBox -->
+                        <ListBox x:Name="ListPlaylistItems" Grid.Row="2" Background="Transparent" BorderThickness="0" 
+                                 MouseDoubleClick="ListPlaylistItems_MouseDoubleClick">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource GlassBorderBrush}" 
+                                            BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Playing status indicator -->
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource AccentBrush}" 
+                                                     VerticalAlignment="Center" Margin="0,0,8,0"
+                                                     Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}}" />
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FileSizeFormatted}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                                            </StackPanel>
+
+                                            <!-- Extension Badge -->
+                                            <Border Grid.Column="2" Background="#1B2230" CornerRadius="4" Padding="4,2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Extension}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- Drop tip -->
+                        <Border Grid.Row="3" BorderBrush="{StaticResource GlassBorderBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                            <TextBlock Text="Puedes arrastrar archivos de vídeo directamente a esta lista." FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </vlc:VideoView>
+    </Grid>
+</Window>

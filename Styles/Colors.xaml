@@ -1,0 +1,55 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Deep Backgrounds -->
+    <Color x:Key="ColorVoid">#080A0D</Color>
+    <Color x:Key="ColorBackground">#0D0F14</Color>
+    <Color x:Key="ColorSurface">#13171F</Color>
+    <Color x:Key="ColorSurfaceElevated">#1A1F2B</Color>
+    <Color x:Key="ColorGlass">#CC151922</Color>
+    <Color x:Key="ColorGlassBorder">#2D3442</Color>
+    <Color x:Key="ColorGlassHover">#E6202636</Color>
+
+    <!-- Accent: Cyan / Neon Teal -->
+    <Color x:Key="ColorAccent">#00D2C4</Color>
+    <Color x:Key="ColorAccentHover">#1AE0D3</Color>
+    <Color x:Key="ColorAccentPressed">#00B8AC</Color>
+    <Color x:Key="ColorAccentGlow">#4D00D2C4</Color>
+
+    <!-- Secondary Accent: Electric Violet -->
+    <Color x:Key="ColorSecondaryAccent">#8B5CF6</Color>
+
+    <!-- Typography -->
+    <Color x:Key="ColorTextPrimary">#F8FAFC</Color>
+    <Color x:Key="ColorTextSecondary">#94A3B8</Color>
+    <Color x:Key="ColorTextMuted">#64748B</Color>
+
+    <!-- Status -->
+    <Color x:Key="ColorSuccess">#10B981</Color>
+    <Color x:Key="ColorWarning">#F59E0B</Color>
+    <Color x:Key="ColorDanger">#EF4444</Color>
+
+    <!-- Solid Brushes -->
+    <SolidColorBrush x:Key="VoidBrush" Color="{StaticResource ColorVoid}" />
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource ColorBackground}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource ColorSurface}" />
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource ColorSurfaceElevated}" />
+    <SolidColorBrush x:Key="GlassBrush" Color="{StaticResource ColorGlass}" />
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource ColorGlassBorder}" />
+    <SolidColorBrush x:Key="GlassHoverBrush" Color="{StaticResource ColorGlassHover}" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource ColorAccent}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource ColorAccentHover}" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource ColorAccentPressed}" />
+    <SolidColorBrush x:Key="AccentGlowBrush" Color="{StaticResource ColorAccentGlow}" />
+    <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{StaticResource ColorSecondaryAccent}" />
+
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource ColorTextPrimary}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource ColorTextSecondary}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource ColorTextMuted}" />
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource ColorSuccess}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource ColorWarning}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource ColorDanger}" />
+
+</ResourceDictionary>
