@@ -60,7 +60,7 @@ Name: "contextmenu"; Description: "{cm:ContextMenuDesc}"; GroupDescription: "{cm
 Name: "fileassoc"; Description: "{cm:FileAssocDesc}"; GroupDescription: "{cm:WindowsIntegration}"
 
 [Files]
-Source: "bin\Publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "bin\Publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*\win-arm64\*,*\win-x86\*"
 Source: "NovaPlayer.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "NovaPlayer.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
