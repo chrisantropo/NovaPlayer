@@ -1,4 +1,4 @@
-; Script de instalador para Nova Player
+﻿; Script de instalador para Nova Player
 ; Generado con Inno Setup 6
 
 #define MyAppName "Nova Player"
@@ -38,10 +38,26 @@ RestartApplications=no
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[CustomMessages]
+spanish.WindowsIntegration=Integración con Windows:
+english.WindowsIntegration=Windows Integration:
+spanish.ContextMenuDesc=Añadir 'Abrir con Nova Player' al menú contextual de archivos de vídeo
+english.ContextMenuDesc=Add 'Open with Nova Player' to context menu of video files
+spanish.FileAssocDesc=Registrar Nova Player como reproductor multimedia admitido en Windows (Default Apps)
+english.FileAssocDesc=Register Nova Player as a supported media player in Windows (Default Apps)
+spanish.ContextMenuAction=Abrir con Nova Player
+english.ContextMenuAction=Open with Nova Player
+spanish.ContextMenuDirAction=Reproducir con Nova Player
+english.ContextMenuDirAction=Play with Nova Player
+spanish.AppDescription=Reproductor multimedia de escritorio de alto rendimiento para Windows
+english.AppDescription=High-performance desktop media player for Windows
+spanish.MediaFileDescription=Archivo multimedia de Nova Player
+english.MediaFileDescription=Nova Player media file
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "contextmenu"; Description: "Añadir 'Abrir con Nova Player' al menú contextual de archivos de vídeo"; GroupDescription: "Integración con Windows:"
-Name: "fileassoc"; Description: "Registrar Nova Player como reproductor multimedia admitido en Windows (Default Apps)"; GroupDescription: "Integración con Windows:"
+Name: "contextmenu"; Description: "{cm:ContextMenuDesc}"; GroupDescription: "{cm:WindowsIntegration}"
+Name: "fileassoc"; Description: "{cm:FileAssocDesc}"; GroupDescription: "{cm:WindowsIntegration}"
 
 [Files]
 Source: "bin\Publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -62,28 +78,28 @@ Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyApp
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
 
 ; Menú contextual: Clic derecho en cualquier archivo de vídeo
-Root: HKCR; Subkey: "SystemFileAssociations\video\shell\NovaPlayer"; ValueType: string; ValueData: "Abrir con Nova Player"; Flags: uninsdeletekey; Tasks: contextmenu
+Root: HKCR; Subkey: "SystemFileAssociations\video\shell\NovaPlayer"; ValueType: string; ValueData: "{cm:ContextMenuAction}"; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "SystemFileAssociations\video\shell\NovaPlayer"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\NovaPlayer.ico"""; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "SystemFileAssociations\video\shell\NovaPlayer\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey; Tasks: contextmenu
 
 ; Menú contextual: Clic derecho en cualquier archivo de audio
-Root: HKCR; Subkey: "SystemFileAssociations\audio\shell\NovaPlayer"; ValueType: string; ValueData: "Abrir con Nova Player"; Flags: uninsdeletekey; Tasks: contextmenu
+Root: HKCR; Subkey: "SystemFileAssociations\audio\shell\NovaPlayer"; ValueType: string; ValueData: "{cm:ContextMenuAction}"; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "SystemFileAssociations\audio\shell\NovaPlayer"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\NovaPlayer.ico"""; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "SystemFileAssociations\audio\shell\NovaPlayer\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey; Tasks: contextmenu
 
 ; Menú contextual: Clic derecho en carpetas (reproducir carpeta)
-Root: HKCR; Subkey: "Directory\shell\NovaPlayer"; ValueType: string; ValueData: "Reproducir con Nova Player"; Flags: uninsdeletekey; Tasks: contextmenu
+Root: HKCR; Subkey: "Directory\shell\NovaPlayer"; ValueType: string; ValueData: "{cm:ContextMenuDirAction}"; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "Directory\shell\NovaPlayer"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\NovaPlayer.ico"""; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKCR; Subkey: "Directory\shell\NovaPlayer\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey; Tasks: contextmenu
 
 ; Registro de capacidades de la aplicación (Default Programs / Aplicaciones predeterminadas de Windows 10/11)
 Root: HKLM; Subkey: "SOFTWARE\RegisteredApplications"; ValueType: string; ValueName: "NovaPlayer"; ValueData: "SOFTWARE\NovaPlayer\Capabilities"; Flags: uninsdeletevalue; Tasks: fileassoc
 Root: HKLM; Subkey: "SOFTWARE\NovaPlayer\Capabilities"; ValueType: string; ValueName: "ApplicationName"; ValueData: "{#MyAppName}"; Flags: uninsdeletekey; Tasks: fileassoc
-Root: HKLM; Subkey: "SOFTWARE\NovaPlayer\Capabilities"; ValueType: string; ValueName: "ApplicationDescription"; ValueData: "Reproductor multimedia de escritorio de alto rendimiento para Windows"; Flags: uninsdeletekey; Tasks: fileassoc
+Root: HKLM; Subkey: "SOFTWARE\NovaPlayer\Capabilities"; ValueType: string; ValueName: "ApplicationDescription"; ValueData: "{cm:AppDescription}"; Flags: uninsdeletekey; Tasks: fileassoc
 Root: HKLM; Subkey: "SOFTWARE\NovaPlayer\Capabilities"; ValueType: string; ValueName: "ApplicationIcon"; ValueData: "{app}\NovaPlayer.ico,0"; Flags: uninsdeletekey; Tasks: fileassoc
 
 ; ProgID base
-Root: HKCR; Subkey: "NovaPlayer.MediaFile"; ValueType: string; ValueData: "Archivo multimedia de Nova Player"; Flags: uninsdeletekey; Tasks: fileassoc
+Root: HKCR; Subkey: "NovaPlayer.MediaFile"; ValueType: string; ValueData: "{cm:MediaFileDescription}"; Flags: uninsdeletekey; Tasks: fileassoc
 Root: HKCR; Subkey: "NovaPlayer.MediaFile\DefaultIcon"; ValueType: string; ValueData: "{app}\NovaPlayer.ico,0"; Flags: uninsdeletekey; Tasks: fileassoc
 Root: HKCR; Subkey: "NovaPlayer.MediaFile\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey; Tasks: fileassoc
 
