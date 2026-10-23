@@ -2435,8 +2435,9 @@ public partial class MainWindow : Window
 
             if (_latestUpdateInfo == null)
             {
-                // No releases found on GitHub or server error
-                UpdateUpToDateCard.Visibility = Visibility.Visible;
+                // No releases found on GitHub or private repository
+                UpdateErrorCard.Visibility = Visibility.Visible;
+                TxtUpdateErrorMessage.Text = "No se encontraron versiones publicadas en GitHub Releases o el repositorio es privado.\nPara habilitar la descarga automática, publica una Release en GitHub y asegúrate de que el repositorio sea público.";
             }
             else if (_latestUpdateInfo.IsNewer && !string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
             {

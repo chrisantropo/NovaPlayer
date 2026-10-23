@@ -1,8 +1,8 @@
-﻿; Script de instalador para Nova Player
+; Script de instalador para Nova Player
 ; Generado con Inno Setup 6
 
 #define MyAppName "Nova Player"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Chris Escalantech"
 #define MyAppURL "https://github.com/chrisantropo/NovaPlayer"
 #define MyAppExeName "NovaPlayer.exe"
