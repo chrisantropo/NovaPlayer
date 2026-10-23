@@ -18,10 +18,17 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 - **Avance fotograma a fotograma**: Inspección precisa de vídeo (`>|`).
 - **Captura de pantalla (Snapshot)**: Guarda fotogramas en alta resolución en `Imágenes/NovaPlayer` con efecto visual de obturador y copia directa al portapapeles con un clic o pulsando `S`.
 
-### 📂 Arrastrar y Soltar (Drag & Drop)
-- Arrastra cualquier archivo o conjunto de archivos de vídeo desde el Explorador de Windows directamente a la ventana del reproductor para iniciar su reproducción al instante y agregarlos a la lista de reproducción.
-- Arrastra archivos de subtítulos (`.srt`, `.vtt`, `.ass`, etc.) para cargarlos y activarlos de inmediato.
-- Compatibilidad integral con **OLE Drag & Drop** y mensajes nativos Win32 de shell (`WM_DROPFILES`, `ChangeWindowMessageFilterEx`), garantizando funcionamiento incluso ante aislamiento de privilegios UIPI o reproduciendo sobre capas nativas de vídeo.
+### 📂 Navegación de Vídeos por Carpeta y Arrastrar y Soltar
+- **Navegación inteligente en la carpeta actual**:
+  - Los botones de **Anterior** y **Siguiente** en la barra inferior buscan automáticamente todos los archivos de vídeo compatibles en la misma carpeta del vídeo actual.
+  - **Ordenación natural de archivos**: Algoritmo `StrCmpLogicalW` (idéntico al del Explorador de Windows) para ordenar correctamente nombres numerados (ej. *Episodio 1*, *Episodio 2*, *Episodio 10*).
+  - Notificaciones en pantalla indicando el vídeo cargado y la posición actual (ej. *Siguiente (3/12): S01E03.mkv*).
+  - Avance automático continuo al siguiente vídeo de la carpeta al finalizar la reproducción.
+  - Atajos dedicados: `Re Pág` / `Av Pág` o `Ctrl + ←` / `Ctrl + →`.
+- **Arrastrar y Soltar (Drag & Drop)**:
+  - Arrastra cualquier archivo o conjunto de archivos de vídeo desde el Explorador de Windows directamente a la ventana del reproductor para iniciar su reproducción al instante y agregarlos a la lista de reproducción.
+  - Arrastra archivos de subtítulos (`.srt`, `.vtt`, `.ass`, etc.) para cargarlos y activarlos de inmediato.
+  - Compatibilidad integral con **OLE Drag & Drop** y mensajes nativos Win32 de shell (`WM_DROPFILES`, `ChangeWindowMessageFilterEx`), garantizando funcionamiento incluso ante aislamiento de privilegios UIPI o reproduciendo sobre capas nativas de vídeo.
 
 ### 💬 Integración y Sincronización Avanzada de Subtítulos
 - **Formatos de subtítulos**: SRT, VTT, ASS, SSA, SUB (tanto pistas incrustadas en MKV/MP4 como archivos externos).
@@ -44,7 +51,12 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 - **Audio Boost**: Amplificación de volumen hasta el **200%** para vídeos con pistas grabadas a bajo volumen.
 - Atajo rápido de silencio (`M`).
 
-### ⚡ Estética y Experiencia de Usuario Moderna
+### ⚡ Estética, Rendimiento y Robustez
+- **Arranque Ultrarrápido e Inmediato**: Inicialización asíncrona de LibVLC en segundo plano y precarga optimizada sin congelar el hilo principal UI; la ventana abre y se dibuja al instante.
+- **Resistencia total contra cierres inesperados**:
+  - Ciclo de vida extendido de punteros nativos `Media`, evitando liberaciones prematuras que provocaban fallos aleatorios.
+  - Desacoplamiento seguro de callbacks nativos C de LibVLC (`EndReached`, `Playing`, `Paused`, `Stopped`, etc.) mediante despachos asíncronos para eliminar bloqueos mutuos (deadlocks).
+  - Capturador global de excepciones no controladas con registro de diagnóstico detallado en `%APPDATA%\NovaPlayer\crash_log.txt`.
 - **Interfaz Dark Fluent**: Paleta oscura obsidiana con acentos en cian neón y tipografía moderna Google **Audiowide**.
 - **Barra de menú superior y menú contextual emergente**:
   - Menú superior completo con accesos a Medio, Reproducción, Audio, Subtítulos, Vídeo y Barras.
@@ -72,6 +84,8 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 | `Espacio` / `K` | Reproducir / Pausar |
 | `Clic izquierdo` | Reproducir / Pausar (en área de vídeo) |
 | `←` / `→` | Retroceder / Avanzar **10 segundos** desde el punto actual |
+| `Re Pág` / `Av Pág` | Vídeo **anterior** / **siguiente** en la carpeta actual |
+| `Ctrl + ←` / `Ctrl + →` | Vídeo **anterior** / **siguiente** en la carpeta actual |
 | `↑` / `↓` | Subir / Bajar volumen en **1%** |
 | `Rueda del ratón (Scroll)` | Subir / Bajar volumen en **5%** en cualquier parte de la ventana |
 | `M` | Silenciar / Activar sonido |

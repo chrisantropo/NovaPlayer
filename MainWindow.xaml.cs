@@ -83,6 +83,27 @@ public partial class MainWindow : Window
         public int Y;
     }
 
+    [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern int StrCmpLogicalW(string psz1, string psz2);
+
+    private sealed class NaturalStringComparer : IComparer<string>
+    {
+        public int Compare(string? x, string? y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+            return StrCmpLogicalW(x, y);
+        }
+    }
+
+    private static readonly HashSet<string> SupportedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp4", ".mkv", ".avi", ".webm", ".mov", ".wmv", ".flv",
+        ".m4v", ".ts", ".m2ts", ".mts", ".vob", ".ogv", ".3gp",
+        ".rmvb", ".divx", ".asf", ".f4v"
+    };
+
     private const int WM_NCLBUTTONDOWN = 0xA1;
     private const int HT_CAPTION = 0x2;
 
@@ -91,6 +112,9 @@ public partial class MainWindow : Window
 
     private LibVLC? _libVLC;
     private MediaPlayer? _mediaPlayer;
+    private Media? _currentMedia;
+    private readonly TaskCompletionSource<bool> _vlcInitTcs = new();
+    private bool _isDisposed = false;
 
     private readonly PlaylistService _playlistService = new();
     private readonly SubtitleService _subtitleService = new();
@@ -140,7 +164,6 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        InitLibVLC();
         InitTimers();
 
         _playlistService.CurrentItemChanged += OnPlaylistItemChanged;
@@ -149,8 +172,10 @@ public partial class MainWindow : Window
 
         UpdateRecentFilesUI();
 
-        Loaded += (s, e) =>
+        Loaded += async (s, e) =>
         {
+            await InitLibVLCAsync();
+
             var args = Environment.GetCommandLineArgs();
             if (args.Length > 1)
             {
@@ -203,7 +228,7 @@ public partial class MainWindow : Window
                 DragFinish(hDrop);
                 if (droppedFiles.Count > 0)
                 {
-                    Dispatcher.Invoke(() => HandleDroppedFiles(droppedFiles.ToArray()));
+                    Dispatcher.BeginInvoke(() => HandleDroppedFiles(droppedFiles.ToArray()));
                     handled = true;
                 }
             }
@@ -211,43 +236,58 @@ public partial class MainWindow : Window
         return IntPtr.Zero;
     }
 
-    private void InitLibVLC()
+    private async Task InitLibVLCAsync()
     {
+        if (_libVLC != null) return;
+
         try
         {
-            Core.Initialize();
+            await Task.Run(() =>
+            {
+                // Core initialization has already been called safely in App.OnStartup
+                try { Core.Initialize(); } catch { }
 
-            // High-performance options optimized for huge files (15GB+ 4K/HEVC)
-            string[] options =
-            [
-                "--file-caching=3000",
-                "--live-caching=3000",
-                "--disc-caching=3000",
-                "--network-caching=3000",
-                "--avcodec-hw=any",
-                "--avcodec-threads=0",
-                "--avcodec-fast",
-                "--no-video-title-show",
-                "--sub-autodetect-fuzzy=2",
-                "--sub-autodetect-file"
-            ];
+                // High-performance options optimized for stability, fast startup and 4K/HEVC playback
+                string[] options =
+                [
+                    "--file-caching=1000",
+                    "--live-caching=1000",
+                    "--disc-caching=1000",
+                    "--network-caching=1500",
+                    "--avcodec-hw=auto",
+                    "--avcodec-threads=0",
+                    "--avcodec-fast",
+                    "--no-video-title-show",
+                    "--sub-autodetect-fuzzy=2",
+                    "--sub-autodetect-file",
+                    "--plugins-cache"
+                ];
 
-            _libVLC = new LibVLC(enableDebugLogs: false, options);
-            _mediaPlayer = new MediaPlayer(_libVLC);
-            _mediaPlayer.EnableMouseInput = false;
-            _mediaPlayer.EnableKeyInput = false;
-            PlayerVideoView.MediaPlayer = _mediaPlayer;
+                _libVLC = new LibVLC(enableDebugLogs: false, options);
+                _mediaPlayer = new MediaPlayer(_libVLC);
+                _mediaPlayer.EnableMouseInput = false;
+                _mediaPlayer.EnableKeyInput = false;
+            });
 
-            // LibVLC Event handlers
-            _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
-            _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
-            _mediaPlayer.Playing += MediaPlayer_Playing;
-            _mediaPlayer.Paused += MediaPlayer_Paused;
-            _mediaPlayer.Stopped += MediaPlayer_Stopped;
-            _mediaPlayer.EndReached += MediaPlayer_EndReached;
+            if (_mediaPlayer != null)
+            {
+                PlayerVideoView.MediaPlayer = _mediaPlayer;
+
+                // LibVLC Event handlers
+                _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
+                _mediaPlayer.Playing += MediaPlayer_Playing;
+                _mediaPlayer.Paused += MediaPlayer_Paused;
+                _mediaPlayer.Stopped += MediaPlayer_Stopped;
+                _mediaPlayer.EndReached += MediaPlayer_EndReached;
+            }
+
+            _vlcInitTcs.TrySetResult(true);
         }
         catch (Exception ex)
         {
+            App.LogCrash("InitLibVLCAsync", ex);
+            _vlcInitTcs.TrySetResult(false);
             MessageBox.Show($"Error inicializando el motor de vídeo LibVLC:\n{ex.Message}", "Error de inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -326,15 +366,18 @@ public partial class MainWindow : Window
 
     #region Media Playback & Control
 
-    public void PlayMedia(string filePath)
+    public async void PlayMedia(string filePath)
     {
-        if (_libVLC == null || _mediaPlayer == null || !File.Exists(filePath)) return;
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
 
         try
         {
+            await _vlcInitTcs.Task;
+            if (_libVLC == null || _mediaPlayer == null || _isDisposed) return;
+
             _currentVideoPath = filePath;
             _currentMovieHash = string.Empty;
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 try
                 {
@@ -343,15 +386,17 @@ public partial class MainWindow : Window
                 catch { }
             });
 
-            using var media = new Media(_libVLC, new Uri(filePath));
-            media.AddOption(":file-caching=3000");
-            media.AddOption(":live-caching=3000");
-            media.AddOption(":disc-caching=3000");
-            media.AddOption(":network-caching=3000");
-            media.AddOption(":avcodec-hw=any");
-            media.AddOption(":avcodec-threads=0");
-            media.AddOption(":no-video-title-show");
-            _mediaPlayer.Play(media);
+            // Dispose previous media instance safely before loading new one
+            _currentMedia?.Dispose();
+            _currentMedia = new Media(_libVLC, filePath, FromType.FromPath);
+            _currentMedia.AddOption(":file-caching=1000");
+            _currentMedia.AddOption(":live-caching=1000");
+            _currentMedia.AddOption(":disc-caching=1000");
+            _currentMedia.AddOption(":network-caching=1500");
+            _currentMedia.AddOption(":avcodec-hw=auto");
+            _currentMedia.AddOption(":avcodec-threads=0");
+            _currentMedia.AddOption(":no-video-title-show");
+            _mediaPlayer.Play(_currentMedia);
 
             WelcomePanel.Visibility = Visibility.Collapsed;
             TxtMediaTitle.Text = Path.GetFileName(filePath);
@@ -369,87 +414,156 @@ public partial class MainWindow : Window
             ShowNotification($"Reproduciendo: {Path.GetFileNameWithoutExtension(filePath)}");
 
             // Look for matching local subtitles and add to tracks
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
-                await Task.Delay(1000);
-                Dispatcher.Invoke(() =>
+                await Task.Delay(800);
+                _ = Dispatcher.BeginInvoke(() =>
                 {
-                    RefreshTracks();
-                    AutoLoadLocalSubtitles();
+                    try
+                    {
+                        if (!_isDisposed)
+                        {
+                            RefreshTracks();
+                            AutoLoadLocalSubtitles();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        App.LogCrash("AutoLoadLocalSubtitles", ex);
+                    }
                 });
             });
         }
         catch (Exception ex)
         {
+            App.LogCrash("PlayMedia", ex);
             MessageBox.Show($"Error al reproducir el archivo:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void OnPlaylistItemChanged(PlaylistItem item)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
-            PlayMedia(item.FilePath);
-            TxtPlaylistCount.Text = $"({_playlistService.Items.Count})";
+            try
+            {
+                if (_isDisposed) return;
+                PlayMedia(item.FilePath);
+                TxtPlaylistCount.Text = $"({_playlistService.Items.Count})";
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("OnPlaylistItemChanged", ex);
+            }
         });
     }
 
     private void MediaPlayer_Playing(object? sender, EventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
-            PathPlayPauseIcon.Data = (Geometry)FindResource("PathPause");
-            PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
-            PathPlayPauseIcon.Margin = new Thickness(0);
-            _hudTimer?.Start();
+            try
+            {
+                if (_isDisposed) return;
+                PathPlayPauseIcon.Data = (Geometry)FindResource("PathPause");
+                PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
+                PathPlayPauseIcon.Margin = new Thickness(0);
+                _hudTimer?.Start();
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_Playing", ex);
+            }
         });
     }
 
     private void MediaPlayer_Paused(object? sender, EventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
-            PathPlayPauseIcon.Data = (Geometry)FindResource("PathPlay");
-            PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
-            PathPlayPauseIcon.Margin = new Thickness(2, 0, 0, 0);
-            ShowHUD();
+            try
+            {
+                if (_isDisposed) return;
+                PathPlayPauseIcon.Data = (Geometry)FindResource("PathPlay");
+                PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
+                PathPlayPauseIcon.Margin = new Thickness(2, 0, 0, 0);
+                ShowHUD();
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_Paused", ex);
+            }
         });
     }
 
     private void MediaPlayer_Stopped(object? sender, EventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
-            PathPlayPauseIcon.Data = (Geometry)FindResource("PathPlay");
-            PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
-            PathPlayPauseIcon.Margin = new Thickness(2, 0, 0, 0);
-            SeekSlider.Value = 0;
-            TxtCurrentTime.Text = "00:00:00";
-            ShowHUD();
+            try
+            {
+                if (_isDisposed) return;
+                PathPlayPauseIcon.Data = (Geometry)FindResource("PathPlay");
+                PathPlayPauseIcon.Fill = (Brush)FindResource("VoidBrush");
+                PathPlayPauseIcon.Margin = new Thickness(2, 0, 0, 0);
+                SeekSlider.Value = 0;
+                TxtCurrentTime.Text = "00:00:00";
+                ShowHUD();
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_Stopped", ex);
+            }
         });
     }
 
     private void MediaPlayer_EndReached(object? sender, EventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        // Must never block LibVLC callback thread to prevent deadlocks
+        Dispatcher.BeginInvoke(async () =>
         {
-            _playlistService.Next();
+            try
+            {
+                await Task.Yield();
+                if (_isDisposed) return;
+
+                if (_playlistService.Items.Count > 1)
+                {
+                    _playlistService.Next();
+                }
+                else
+                {
+                    PlayFolderNext(isAutoAdvance: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_EndReached", ex);
+            }
         });
     }
 
     private void MediaPlayer_LengthChanged(object? sender, MediaPlayerLengthChangedEventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
-            TimeSpan duration = TimeSpan.FromMilliseconds(e.Length);
-            TxtTotalTime.Text = FormatTime(duration);
-            SeekSlider.Maximum = e.Length;
+            try
+            {
+                if (_isDisposed) return;
+                TimeSpan duration = TimeSpan.FromMilliseconds(e.Length);
+                TxtTotalTime.Text = FormatTime(duration);
+                SeekSlider.Maximum = e.Length;
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_LengthChanged", ex);
+            }
         });
     }
 
     private void MediaPlayer_TimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
     {
-        if (_isDraggingSeek) return;
+        if (_isDraggingSeek || _isDisposed) return;
 
         long now = Environment.TickCount64;
         if (now < _suppressTimeUpdatesUntil)
@@ -467,48 +581,73 @@ public partial class MainWindow : Window
 
         Dispatcher.BeginInvoke(() =>
         {
-            if (_isDraggingSeek) return;
-            TimeSpan current = TimeSpan.FromMilliseconds(e.Time);
-            TxtCurrentTime.Text = FormatTime(current);
-            SeekSlider.Value = e.Time;
+            try
+            {
+                if (_isDraggingSeek || _isDisposed) return;
+                TimeSpan current = TimeSpan.FromMilliseconds(e.Time);
+                TxtCurrentTime.Text = FormatTime(current);
+                SeekSlider.Value = e.Time;
+            }
+            catch (Exception ex)
+            {
+                App.LogCrash("MediaPlayer_TimeChanged", ex);
+            }
         });
     }
 
     private void TogglePlayPause()
     {
-        if (_mediaPlayer == null) return;
+        if (_mediaPlayer == null || _isDisposed) return;
 
-        if (_mediaPlayer.IsPlaying)
+        try
         {
-            _mediaPlayer.Pause();
-            ShowNotification("Pausa");
+            if (_mediaPlayer.IsPlaying)
+            {
+                _mediaPlayer.Pause();
+                ShowNotification("Pausa");
+            }
+            else if (_mediaPlayer.Media != null)
+            {
+                _mediaPlayer.Play();
+                ShowNotification("Reproduciendo");
+            }
+            else if (_playlistService.CurrentItem != null)
+            {
+                PlayMedia(_playlistService.CurrentItem.FilePath);
+            }
         }
-        else if (_mediaPlayer.Media != null)
+        catch (Exception ex)
         {
-            _mediaPlayer.Play();
-            ShowNotification("Reproduciendo");
-        }
-        else if (_playlistService.CurrentItem != null)
-        {
-            PlayMedia(_playlistService.CurrentItem.FilePath);
+            App.LogCrash("TogglePlayPause", ex);
         }
     }
 
     private void SeekRelative(int seconds)
     {
-        if (_mediaPlayer == null) return;
-        long totalLength = _mediaPlayer.Length > 0 ? _mediaPlayer.Length : (long)SeekSlider.Maximum;
-        if (totalLength <= 0) return;
+        if (_mediaPlayer == null || _isDisposed) return;
 
-        long newTime = _mediaPlayer.Time + (seconds * 1000);
-        newTime = Math.Clamp(newTime, 0, totalLength);
-        _lastSeekTime = newTime;
-        _suppressTimeUpdatesUntil = Environment.TickCount64 + 3000;
-        SeekSlider.Value = newTime;
-        TxtCurrentTime.Text = FormatTime(TimeSpan.FromMilliseconds(newTime));
-        RequestSeek(newTime);
+        try
+        {
+            long totalLength = _mediaPlayer.Length > 0 ? _mediaPlayer.Length : (long)SeekSlider.Maximum;
+            if (totalLength <= 0) return;
 
-        ShowNotification(seconds > 0 ? $"+{seconds}s ({FormatTime(TimeSpan.FromMilliseconds(newTime))})" : $"{seconds}s ({FormatTime(TimeSpan.FromMilliseconds(newTime))})");
+            long currentTime = _mediaPlayer.Time;
+            if (currentTime < 0) currentTime = (long)SeekSlider.Value;
+
+            long newTime = currentTime + (seconds * 1000);
+            newTime = Math.Clamp(newTime, 0, totalLength);
+            _lastSeekTime = newTime;
+            _suppressTimeUpdatesUntil = Environment.TickCount64 + 3000;
+            SeekSlider.Value = newTime;
+            TxtCurrentTime.Text = FormatTime(TimeSpan.FromMilliseconds(newTime));
+            RequestSeek(newTime);
+
+            ShowNotification(seconds > 0 ? $"+{seconds}s ({FormatTime(TimeSpan.FromMilliseconds(newTime))})" : $"{seconds}s ({FormatTime(TimeSpan.FromMilliseconds(newTime))})");
+        }
+        catch (Exception ex)
+        {
+            App.LogCrash("SeekRelative", ex);
+        }
     }
 
     #endregion
@@ -1161,8 +1300,16 @@ public partial class MainWindow : Window
                 TogglePlayPause();
                 e.Handled = true;
                 break;
+            case Key.Left when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                PlayFolderPrevious();
+                e.Handled = true;
+                break;
             case Key.Left:
                 SeekRelative(-10);
+                e.Handled = true;
+                break;
+            case Key.Right when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
+                PlayFolderNext();
                 e.Handled = true;
                 break;
             case Key.Right:
@@ -1223,6 +1370,14 @@ public partial class MainWindow : Window
                 BtnPlaylistToggle_Click(this, new RoutedEventArgs());
                 e.Handled = true;
                 break;
+            case Key.PageUp or Key.MediaPreviousTrack:
+                PlayFolderPrevious();
+                e.Handled = true;
+                break;
+            case Key.PageDown or Key.MediaNextTrack:
+                PlayFolderNext();
+                e.Handled = true;
+                break;
             case Key.O when Keyboard.IsKeyDown(Key.LeftCtrl):
                 BtnOpenFile_Click(this, new RoutedEventArgs());
                 e.Handled = true;
@@ -1254,13 +1409,107 @@ public partial class MainWindow : Window
 
     private void BtnForward10_Click(object sender, RoutedEventArgs e) => SeekRelative(10);
 
-    private void BtnPrevious_Click(object sender, RoutedEventArgs e) => _playlistService.Previous();
+    private void BtnPrevious_Click(object sender, RoutedEventArgs e) => PlayFolderPrevious();
 
-    private void BtnNext_Click(object sender, RoutedEventArgs e) => _playlistService.Next();
+    private void BtnNext_Click(object sender, RoutedEventArgs e) => PlayFolderNext();
+
+    private List<string> GetFolderVideoFiles(string currentPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(currentPath) || !File.Exists(currentPath))
+                return new List<string>();
+
+            string? dir = Path.GetDirectoryName(currentPath);
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+                return new List<string>();
+
+            var files = Directory.EnumerateFiles(dir)
+                .Where(f => SupportedVideoExtensions.Contains(Path.GetExtension(f)))
+                .ToList();
+
+            files.Sort(new NaturalStringComparer());
+            return files;
+        }
+        catch (Exception ex)
+        {
+            App.LogCrash("GetFolderVideoFiles", ex);
+            return new List<string>();
+        }
+    }
+
+    public void PlayFolderNext(bool isAutoAdvance = false)
+    {
+        if (string.IsNullOrWhiteSpace(_currentVideoPath))
+        {
+            if (_playlistService.Items.Count > 0)
+            {
+                _playlistService.Next();
+            }
+            return;
+        }
+
+        var files = GetFolderVideoFiles(_currentVideoPath);
+        if (files.Count == 0) return;
+
+        int currentIndex = files.FindIndex(f => string.Equals(f, _currentVideoPath, StringComparison.OrdinalIgnoreCase));
+        if (currentIndex == -1)
+        {
+            PlayMedia(files[0]);
+            return;
+        }
+
+        if (currentIndex + 1 < files.Count)
+        {
+            string nextFile = files[currentIndex + 1];
+            PlayMedia(nextFile);
+            ShowNotification($"Siguiente ({currentIndex + 2}/{files.Count}): {Path.GetFileName(nextFile)}");
+        }
+        else
+        {
+            if (!isAutoAdvance)
+            {
+                ShowNotification("Último vídeo de la carpeta");
+            }
+        }
+    }
+
+    public void PlayFolderPrevious()
+    {
+        if (string.IsNullOrWhiteSpace(_currentVideoPath))
+        {
+            if (_playlistService.Items.Count > 0)
+            {
+                _playlistService.Previous();
+            }
+            return;
+        }
+
+        var files = GetFolderVideoFiles(_currentVideoPath);
+        if (files.Count == 0) return;
+
+        int currentIndex = files.FindIndex(f => string.Equals(f, _currentVideoPath, StringComparison.OrdinalIgnoreCase));
+        if (currentIndex == -1)
+        {
+            PlayMedia(files[0]);
+            return;
+        }
+
+        if (currentIndex - 1 >= 0)
+        {
+            string prevFile = files[currentIndex - 1];
+            PlayMedia(prevFile);
+            ShowNotification($"Anterior ({currentIndex}/{files.Count}): {Path.GetFileName(prevFile)}");
+        }
+        else
+        {
+            ShowNotification("Primer vídeo de la carpeta");
+        }
+    }
 
     private void BtnFrameStep_Click(object sender, RoutedEventArgs e)
     {
-        if (_mediaPlayer == null) return;
+        if (_mediaPlayer == null || _isDisposed) return;
         _mediaPlayer.NextFrame();
         ShowNotification("Fotograma siguiente");
     }
@@ -1290,28 +1539,35 @@ public partial class MainWindow : Window
 
     private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (_mediaPlayer == null) return;
+        if (_mediaPlayer == null || _isDisposed) return;
 
-        int vol = (int)e.NewValue;
-        _mediaPlayer.Volume = vol;
-        if (TxtVolumeLevel != null) TxtVolumeLevel.Text = $"{vol}%";
-
-        if (PathVolumeIcon != null)
+        try
         {
-            if (vol == 0)
-                PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeMute");
-            else if (vol < 60)
-                PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeLow");
-            else
-                PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeHigh");
-        }
+            int vol = (int)e.NewValue;
+            _mediaPlayer.Volume = vol;
+            if (TxtVolumeLevel != null) TxtVolumeLevel.Text = $"{vol}%";
 
-        _isMuted = (vol == 0);
+            if (PathVolumeIcon != null)
+            {
+                if (vol == 0)
+                    PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeMute");
+                else if (vol < 60)
+                    PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeLow");
+                else
+                    PathVolumeIcon.Data = (Geometry)FindResource("PathVolumeHigh");
+            }
+
+            _isMuted = (vol == 0);
+        }
+        catch (Exception ex)
+        {
+            App.LogCrash("VolumeSlider_ValueChanged", ex);
+        }
     }
 
     private void RequestSeek(long targetMs)
     {
-        if (_mediaPlayer == null) return;
+        if (_mediaPlayer == null || _isDisposed) return;
 
         lock (_seekLock)
         {
@@ -1324,15 +1580,18 @@ public partial class MainWindow : Window
                 try
                 {
                     await Task.Delay(35, ct);
-                    if (ct.IsCancellationRequested) return;
+                    if (ct.IsCancellationRequested || _isDisposed) return;
 
-                    if (_mediaPlayer != null)
+                    if (_mediaPlayer != null && _mediaPlayer.IsSeekable && _mediaPlayer.State != VLCState.Stopped && _mediaPlayer.State != VLCState.Ended && _mediaPlayer.State != VLCState.Error)
                     {
                         _mediaPlayer.Time = targetMs;
                     }
                 }
                 catch (OperationCanceledException) { }
-                catch { }
+                catch (Exception ex)
+                {
+                    App.LogCrash("RequestSeek", ex);
+                }
             }, ct);
         }
     }
@@ -2289,9 +2548,45 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        _mediaPlayer?.Stop();
-        _mediaPlayer?.Dispose();
-        _libVLC?.Dispose();
+        _isDisposed = true;
+
+        try { _hudTimer?.Stop(); } catch { }
+        try { _cursorPollTimer?.Stop(); } catch { }
+        try { _toastTimer?.Stop(); } catch { }
+        try { _videoClickTimer?.Stop(); } catch { }
+
+        if (_mediaPlayer != null)
+        {
+            try
+            {
+                _mediaPlayer.TimeChanged -= MediaPlayer_TimeChanged;
+                _mediaPlayer.LengthChanged -= MediaPlayer_LengthChanged;
+                _mediaPlayer.Playing -= MediaPlayer_Playing;
+                _mediaPlayer.Paused -= MediaPlayer_Paused;
+                _mediaPlayer.Stopped -= MediaPlayer_Stopped;
+                _mediaPlayer.EndReached -= MediaPlayer_EndReached;
+            }
+            catch { }
+
+            try { _mediaPlayer.Stop(); } catch { }
+            try { _mediaPlayer.Dispose(); } catch { }
+            _mediaPlayer = null;
+        }
+
+        try
+        {
+            _currentMedia?.Dispose();
+            _currentMedia = null;
+        }
+        catch { }
+
+        try
+        {
+            _libVLC?.Dispose();
+            _libVLC = null;
+        }
+        catch { }
+
         base.OnClosed(e);
     }
 }
