@@ -69,6 +69,11 @@ Diseñado como una evolución visual y funcional de reproductores clásicos como
 - **Fijar en primer plano (Always on top)**: Mantén el reproductor por encima de otras ventanas.
 - **Historial de archivos recientes**: Lista de reproducción rápida con los últimos archivos abiertos y opción de borrado.
 - **Lista de reproducción (Playlist)** con soporte de ordenación, modos de repetición (Todo, Uno, Desactivado) y reproducción aleatoria (Shuffle).
+- **Comportamiento configurable al finalizar el vídeo**:
+  - **Detener el vídeo y no hacer nada (por defecto)**: Detiene la reproducción al llegar al final y mantiene el reproductor listo para iniciar de nuevo.
+  - **Volver a reproducir el mismo vídeo desde el inicio**: Bucle continuo del vídeo actual (ideal para clips, tutoriales o bucles visuales).
+  - **Reproducir el siguiente vídeo de la lista o carpeta**: Modo de reproducción continua automática que avanza al siguiente archivo de la lista o al siguiente vídeo ordenado de la carpeta.
+  - Acceso desde la barra inferior (con botón interactivo y clic derecho), menú superior (`Reproducción > Al terminar el vídeo`) y menú contextual emergente, guardando la preferencia automáticamente entre sesiones en `%APPDATA%\NovaPlayer\settings.json`.
 - **Notificaciones Toast flotantes**: Indicadores visuales instantáneos al cambiar volumen, velocidad, retraso de subtítulos o guardar capturas.
 - **Centro de Ayuda, Actualizaciones y Acerca de (`F1`)**:
   - Panel deslizante integrado con pestañas para información de la aplicación, guía de atajos y gestor de actualizaciones.

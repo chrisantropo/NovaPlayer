@@ -150,6 +150,7 @@ public partial class MainWindow : Window
     private string _currentMovieHash = string.Empty;
     private string _selectedLanguageFilter = "es";
     private bool _isHudPinned = false;
+    private PlaybackEndAction _playbackEndAction = PlaybackEndAction.Stop;
 
     private readonly float[] _speeds = [0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f, 3.0f];
     private int _speedIndex = 3; // 1.0x
@@ -171,6 +172,9 @@ public partial class MainWindow : Window
         TxtPlaylistCount.Text = $"({_playlistService.Items.Count})";
 
         UpdateRecentFilesUI();
+
+        var settings = SettingsService.Load();
+        SetPlaybackEndAction(settings.EndAction, saveSetting: false, showOsd: false);
 
         Loaded += async (s, e) =>
         {
@@ -525,15 +529,39 @@ public partial class MainWindow : Window
             try
             {
                 await Task.Yield();
+                await Task.Delay(150);
                 if (_isDisposed) return;
 
-                if (_playlistService.Items.Count > 1)
+                switch (_playbackEndAction)
                 {
-                    _playlistService.Next();
-                }
-                else
-                {
-                    PlayFolderNext(isAutoAdvance: true);
+                    case PlaybackEndAction.RepeatCurrent:
+                        if (!string.IsNullOrEmpty(_currentVideoPath))
+                        {
+                            PlayMedia(_currentVideoPath);
+                            ShowNotification("Repitiendo vídeo");
+                        }
+                        break;
+
+                    case PlaybackEndAction.PlayNext:
+                        if (_playlistService.Items.Count > 1)
+                        {
+                            _playlistService.Next();
+                        }
+                        else
+                        {
+                            PlayFolderNext(isAutoAdvance: true);
+                        }
+                        break;
+
+                    case PlaybackEndAction.Stop:
+                    default:
+                        // Detener el vídeo y no hacer nada (por defecto)
+                        _mediaPlayer?.Stop();
+                        BtnPlayPause.ToolTip = "Reproducir (Espacio)";
+                        PathPlayPauseIcon.Data = (Geometry)FindResource("PathPlay");
+                        SeekSlider.Value = SeekSlider.Maximum;
+                        TxtCurrentTime.Text = TxtTotalTime.Text;
+                        break;
                 }
             }
             catch (Exception ex)
@@ -606,10 +634,14 @@ public partial class MainWindow : Window
                 _mediaPlayer.Pause();
                 ShowNotification("Pausa");
             }
-            else if (_mediaPlayer.Media != null)
+            else if (_mediaPlayer.Media != null && _mediaPlayer.State != VLCState.Ended && _mediaPlayer.State != VLCState.Stopped)
             {
                 _mediaPlayer.Play();
                 ShowNotification("Reproduciendo");
+            }
+            else if (!string.IsNullOrEmpty(_currentVideoPath))
+            {
+                PlayMedia(_currentVideoPath);
             }
             else if (_playlistService.CurrentItem != null)
             {
@@ -2258,24 +2290,113 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BtnRepeatMode_Click(object sender, RoutedEventArgs e)
+    public void SetPlaybackEndAction(PlaybackEndAction action, bool saveSetting = true, bool showOsd = true)
     {
-        _playlistService.Repeat = _playlistService.Repeat switch
+        _playbackEndAction = action;
+
+        // Update TopMainMenu items
+        if (MenuEndActionStop != null) MenuEndActionStop.IsChecked = (action == PlaybackEndAction.Stop);
+        if (MenuEndActionRepeatCurrent != null) MenuEndActionRepeatCurrent.IsChecked = (action == PlaybackEndAction.RepeatCurrent);
+        if (MenuEndActionPlayNext != null) MenuEndActionPlayNext.IsChecked = (action == PlaybackEndAction.PlayNext);
+
+        // Update ContextMenu items
+        if (ContextMenuEndActionStop != null) ContextMenuEndActionStop.IsChecked = (action == PlaybackEndAction.Stop);
+        if (ContextMenuEndActionRepeatCurrent != null) ContextMenuEndActionRepeatCurrent.IsChecked = (action == PlaybackEndAction.RepeatCurrent);
+        if (ContextMenuEndActionPlayNext != null) ContextMenuEndActionPlayNext.IsChecked = (action == PlaybackEndAction.PlayNext);
+
+        // Update Button ContextMenu items
+        if (BtnEndActionMenuStop != null) BtnEndActionMenuStop.IsChecked = (action == PlaybackEndAction.Stop);
+        if (BtnEndActionMenuRepeat != null) BtnEndActionMenuRepeat.IsChecked = (action == PlaybackEndAction.RepeatCurrent);
+        if (BtnEndActionMenuNext != null) BtnEndActionMenuNext.IsChecked = (action == PlaybackEndAction.PlayNext);
+
+        // Update Button Icon, Foreground, and ToolTip
+        if (BtnEndAction != null && PathEndActionIcon != null)
         {
-            RepeatMode.None => RepeatMode.All,
-            RepeatMode.All => RepeatMode.One,
-            _ => RepeatMode.None
+            switch (action)
+            {
+                case PlaybackEndAction.RepeatCurrent:
+                    PathEndActionIcon.Data = (Geometry)FindResource("PathRepeatOne");
+                    BtnEndAction.Foreground = (Brush)FindResource("AccentBrush");
+                    BtnEndAction.ToolTip = "Al terminar: Repetir vídeo actual en bucle (Clic para cambiar)";
+                    if (showOsd) ShowNotification("Al terminar: Repetir este vídeo en bucle");
+                    break;
+
+                case PlaybackEndAction.PlayNext:
+                    PathEndActionIcon.Data = (Geometry)FindResource("PathRepeat");
+                    BtnEndAction.Foreground = (Brush)FindResource("AccentBrush");
+                    BtnEndAction.ToolTip = "Al terminar: Reproducir siguiente (lista o carpeta) (Clic para cambiar)";
+                    if (showOsd) ShowNotification("Al terminar: Reproducir siguiente vídeo");
+                    break;
+
+                case PlaybackEndAction.Stop:
+                default:
+                    PathEndActionIcon.Data = (Geometry)FindResource("PathStop");
+                    BtnEndAction.Foreground = (Brush)FindResource("TextSecondaryBrush");
+                    BtnEndAction.ToolTip = "Al terminar: Detener el vídeo (Clic para cambiar)";
+                    if (showOsd) ShowNotification("Al terminar: Detener el vídeo (por defecto)");
+                    break;
+            }
+        }
+
+        // Keep playlist drawer repeat button in sync
+        if (BtnRepeatMode != null && PathRepeatIcon != null)
+        {
+            _playlistService.Repeat = action switch
+            {
+                PlaybackEndAction.RepeatCurrent => RepeatMode.One,
+                PlaybackEndAction.PlayNext => RepeatMode.All,
+                _ => RepeatMode.None
+            };
+
+            PathRepeatIcon.Data = _playlistService.Repeat == RepeatMode.One 
+                ? (Geometry)FindResource("PathRepeatOne") 
+                : (Geometry)FindResource("PathRepeat");
+
+            BtnRepeatMode.Foreground = _playlistService.Repeat == RepeatMode.None 
+                ? (Brush)FindResource("TextSecondaryBrush") 
+                : (Brush)FindResource("AccentBrush");
+        }
+
+        if (saveSetting)
+        {
+            SettingsService.Save(new AppSettings { EndAction = _playbackEndAction });
+        }
+    }
+
+    private void BtnEndAction_Click(object sender, RoutedEventArgs e)
+    {
+        // Cycle: Stop -> RepeatCurrent -> PlayNext -> Stop
+        PlaybackEndAction nextAction = _playbackEndAction switch
+        {
+            PlaybackEndAction.Stop => PlaybackEndAction.RepeatCurrent,
+            PlaybackEndAction.RepeatCurrent => PlaybackEndAction.PlayNext,
+            _ => PlaybackEndAction.Stop
         };
 
-        PathRepeatIcon.Data = _playlistService.Repeat == RepeatMode.One 
-            ? (Geometry)FindResource("PathRepeatOne") 
-            : (Geometry)FindResource("PathRepeat");
+        SetPlaybackEndAction(nextAction, saveSetting: true, showOsd: true);
+    }
 
-        BtnRepeatMode.Foreground = _playlistService.Repeat == RepeatMode.None 
-            ? (Brush)FindResource("TextSecondaryBrush") 
-            : (Brush)FindResource("AccentBrush");
+    private void MenuEndAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Tag is string tag)
+        {
+            if (Enum.TryParse<PlaybackEndAction>(tag, out var action))
+            {
+                SetPlaybackEndAction(action, saveSetting: true, showOsd: true);
+            }
+        }
+    }
 
-        ShowNotification($"Repetición: {_playlistService.Repeat}");
+    private void BtnRepeatMode_Click(object sender, RoutedEventArgs e)
+    {
+        PlaybackEndAction nextAction = _playbackEndAction switch
+        {
+            PlaybackEndAction.Stop => PlaybackEndAction.PlayNext,
+            PlaybackEndAction.PlayNext => PlaybackEndAction.RepeatCurrent,
+            _ => PlaybackEndAction.Stop
+        };
+
+        SetPlaybackEndAction(nextAction, saveSetting: true, showOsd: true);
     }
 
     private void BtnShuffle_Click(object sender, RoutedEventArgs e)

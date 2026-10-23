@@ -102,6 +102,12 @@
                                 <MenuItem Header="2.0x" Click="MenuSpeed_Click" Tag="2.0" />
                                 <MenuItem Header="3.0x" Click="MenuSpeed_Click" Tag="3.0" />
                             </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Al terminar el vídeo">
+                                <MenuItem x:Name="ContextMenuEndActionStop" Header="Detener el vídeo y no hacer nada (Por defecto)" IsCheckable="True" Click="MenuEndAction_Click" Tag="Stop" />
+                                <MenuItem x:Name="ContextMenuEndActionRepeatCurrent" Header="Volver a reproducir el mismo vídeo desde el inicio" IsCheckable="True" Click="MenuEndAction_Click" Tag="RepeatCurrent" />
+                                <MenuItem x:Name="ContextMenuEndActionPlayNext" Header="Reproducir el siguiente vídeo de la lista o carpeta" IsCheckable="True" Click="MenuEndAction_Click" Tag="PlayNext" />
+                            </MenuItem>
                         </MenuItem>
 
                         <MenuItem x:Name="ContextAudioSubmenu" Header="Audio">
@@ -371,6 +377,12 @@
                                         <MenuItem Header="2.0x" Click="MenuSpeed_Click" Tag="2.0" />
                                         <MenuItem Header="3.0x" Click="MenuSpeed_Click" Tag="3.0" />
                                     </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Al terminar el vídeo">
+                                        <MenuItem x:Name="MenuEndActionStop" Header="Detener el vídeo y no hacer nada (Por defecto)" IsCheckable="True" Click="MenuEndAction_Click" Tag="Stop" />
+                                        <MenuItem x:Name="MenuEndActionRepeatCurrent" Header="Volver a reproducir el mismo vídeo desde el inicio" IsCheckable="True" Click="MenuEndAction_Click" Tag="RepeatCurrent" />
+                                        <MenuItem x:Name="MenuEndActionPlayNext" Header="Reproducir el siguiente vídeo de la lista o carpeta" IsCheckable="True" Click="MenuEndAction_Click" Tag="PlayNext" />
+                                    </MenuItem>
                                 </MenuItem>
                                 <MenuItem Header="_Audio">
                                     <MenuItem x:Name="MenuAudioTracksSubmenu" Header="Pistas de audio" SubmenuOpened="MenuAudioTracks_SubmenuOpened" />
@@ -604,6 +616,20 @@
                                 <!-- Take Snapshot / Screenshot -->
                                 <Button Style="{StaticResource IconButton}" ToolTip="Captura de pantalla (S)" Click="BtnSnapshot_Click" Margin="0,0,4,0">
                                     <Path Data="{StaticResource PathCamera}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="16" Height="16" Stretch="Uniform" />
+                                </Button>
+
+                                <!-- Playback End Action Button (Stop / Repeat / Play Next) -->
+                                <Button x:Name="BtnEndAction" Style="{StaticResource IconButton}" 
+                                        ToolTip="Al terminar el vídeo: Detener (Clic para cambiar)" 
+                                        Click="BtnEndAction_Click" Margin="0,0,4,0">
+                                    <Path x:Name="PathEndActionIcon" Data="{StaticResource PathStop}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="14" Height="14" Stretch="Uniform" />
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem x:Name="BtnEndActionMenuStop" Header="Detener el vídeo y no hacer nada (Por defecto)" IsCheckable="True" Click="MenuEndAction_Click" Tag="Stop" />
+                                            <MenuItem x:Name="BtnEndActionMenuRepeat" Header="Volver a reproducir el mismo vídeo desde el inicio" IsCheckable="True" Click="MenuEndAction_Click" Tag="RepeatCurrent" />
+                                            <MenuItem x:Name="BtnEndActionMenuNext" Header="Reproducir el siguiente vídeo de la lista o carpeta" IsCheckable="True" Click="MenuEndAction_Click" Tag="PlayNext" />
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
                                 </Button>
 
                                 <!-- Playlist Drawer Toggle -->
