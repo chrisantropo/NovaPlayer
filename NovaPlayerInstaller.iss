@@ -31,6 +31,8 @@ ArchitecturesInstallIn64BitMode=x64
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ChangesAssociations=yes
+CloseApplications=force
+RestartApplications=no
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
@@ -133,12 +135,30 @@ Root: HKCR; Subkey: ".3gp\OpenWithList\{#MyAppExeName}"; ValueType: string; Valu
 Root: HKCR; Subkey: ".ogv\OpenWithList\{#MyAppExeName}"; ValueType: string; ValueData: ""; Flags: uninsdeletekey; Tasks: fileassoc
 
 [Code]
-// Notificar al shell de Windows que las asociaciones de archivo han cambiado
+function InitializeSetup(): Boolean;
+var
+  ErrorCode: Integer;
+begin
+  // Cerrar cualquier instancia previa de NovaPlayer para liberar DLLs bloqueadas
+  ShellExec('open', 'taskkill.exe', '/F /IM NovaPlayer.exe', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+  Sleep(400);
+  Result := True;
+end;
+
+function InitializeUninstall(): Boolean;
+var
+  ErrorCode: Integer;
+begin
+  // Cerrar cualquier instancia previa de NovaPlayer antes de desinstalar
+  ShellExec('open', 'taskkill.exe', '/F /IM NovaPlayer.exe', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+  Sleep(400);
+  Result := True;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0)
     // Inno Setup maneja automáticamente ChangesAssociations=yes
   end;
 end;
